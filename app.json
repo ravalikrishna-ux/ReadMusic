@@ -1,0 +1,32 @@
+{
+  "expo": {
+    "name": "ReadMusic",
+    "slug": "readmusic",
+    "version": "1.0.0",
+    "orientation": "default",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "dark",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.readmusic.guitar",
+      "infoPlist": {
+        "NSMicrophoneUsageDescription": "ReadMusic listens to your guitar in real time to verify notes, chords, and tuning during practice."
+      }
+    },
+    "android": {
+      "package": "com.readmusic.guitar",
+      "permissions": ["android.permission.RECORD_AUDIO"],
+      "adaptiveIcon": {
+        "backgroundColor": "#111317",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "favicon": "./assets/favicon.png",
+      "bundler": "metro"
+    }
+  }
+}
