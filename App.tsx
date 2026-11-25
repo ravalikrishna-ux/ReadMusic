@@ -2,24 +2,23 @@ import { StatusBar } from 'expo-status-bar';
 import React, { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
-import { BookMarked, Compass, Home, Music, Settings } from 'lucide-react-native';
+import { BookOpen, Compass, Music, Settings } from 'lucide-react-native';
 import { GuitarTunerModal } from './src/components/GuitarTunerModal';
 import { PaywallModal } from './src/components/PaywallModal';
-import { CourseTreeScreen } from './src/screens/CourseTreeScreen';
+import { LearnScreen } from './src/screens/LearnScreen';
 import { LessonDetailScreen } from './src/screens/LessonDetailScreen';
 import { OnboardingScreen } from './src/screens/OnboardingScreen';
 import { ReferenceScreen } from './src/screens/ReferenceScreen';
 import { SettingsScreen } from './src/screens/SettingsScreen';
 import { SightReadLabScreen } from './src/screens/SightReadLabScreen';
-import { StudioHomeScreen } from './src/screens/StudioHomeScreen';
 import { AppStoreProvider, useAppStore } from './src/store/useAppStore';
 import { palette } from './src/theme/tokens';
 
-type TabId = 'home' | 'course' | 'lab' | 'reference' | 'settings';
+type TabId = 'learn' | 'practice' | 'explore' | 'settings';
 
 const ReadMusicShell: React.FC = () => {
   const { state, hydrated, unlockFullCourse } = useAppStore();
-  const [activeTab, setActiveTab] = useState<TabId>('home');
+  const [activeTab, setActiveTab] = useState<TabId>('learn');
   const [activeLessonId, setActiveLessonId] = useState<string | null>(null);
   const [paywallOpen, setPaywallOpen] = useState(false);
   const [tunerOpen, setTunerOpen] = useState(false);
@@ -41,15 +40,10 @@ const ReadMusicShell: React.FC = () => {
     );
   }
 
-  const openLesson = (lessonId: string) => {
-    setActiveLessonId(lessonId);
-  };
-
   return (
     <SafeAreaView style={styles.root}>
       <StatusBar style="light" />
 
-      {/* Main Content Area */}
       <View style={styles.main}>
         {activeLessonId ? (
           <LessonDetailScreen
@@ -57,35 +51,28 @@ const ReadMusicShell: React.FC = () => {
             onBack={() => setActiveLessonId(null)}
             onOpenLesson={(nextId) => setActiveLessonId(nextId)}
           />
-        ) : activeTab === 'home' ? (
-          <StudioHomeScreen
-            onOpenLesson={openLesson}
-            onNavigateTab={(t) => setActiveTab(t)}
+        ) : activeTab === 'learn' ? (
+          <LearnScreen
+            onOpenLesson={(id) => setActiveLessonId(id)}
             onOpenTuner={() => setTunerOpen(true)}
             onOpenPaywall={() => setPaywallOpen(true)}
           />
-        ) : activeTab === 'course' ? (
-          <CourseTreeScreen
-            onOpenLesson={openLesson}
-            onOpenPaywall={() => setPaywallOpen(true)}
-          />
-        ) : activeTab === 'lab' ? (
+        ) : activeTab === 'practice' ? (
           <SightReadLabScreen onOpenPaywall={() => setPaywallOpen(true)} />
-        ) : activeTab === 'reference' ? (
+        ) : activeTab === 'explore' ? (
           <ReferenceScreen />
         ) : (
           <SettingsScreen onOpenPaywall={() => setPaywallOpen(true)} />
         )}
       </View>
 
-      {/* Bottom 5-Tab Studio Navigation Bar */}
+      {/* Clean 4-Tab Navigation Bar */}
       <View style={styles.tabBar}>
         {(
           [
-            { id: 'home', label: 'Studio', Icon: Home },
-            { id: 'course', label: 'Course', Icon: Compass },
-            { id: 'lab', label: 'Sight-Read', Icon: Music },
-            { id: 'reference', label: 'Reference', Icon: BookMarked },
+            { id: 'learn', label: 'Learn', Icon: BookOpen },
+            { id: 'practice', label: 'Practice', Icon: Music },
+            { id: 'explore', label: 'Explore', Icon: Compass },
             { id: 'settings', label: 'Settings', Icon: Settings },
           ] as const
         ).map(({ id, label, Icon }) => {
@@ -99,19 +86,13 @@ const ReadMusicShell: React.FC = () => {
               }}
               style={styles.tabItem}
             >
-              <Icon
-                size={19}
-                color={isCurrent ? palette.accentBrass : palette.textMuted}
-              />
-              <Text style={[styles.tabLabel, isCurrent && styles.tabLabelActive]}>
-                {label}
-              </Text>
+              <Icon size={20} color={isCurrent ? palette.accentBrass : palette.textMuted} />
+              <Text style={[styles.tabLabel, isCurrent && styles.tabLabelActive]}>{label}</Text>
             </Pressable>
           );
         })}
       </View>
 
-      {/* Modals */}
       <PaywallModal
         visible={paywallOpen}
         onClose={() => setPaywallOpen(false)}
@@ -136,45 +117,29 @@ export default function App() {
 }
 
 const styles = StyleSheet.create({
-  root: {
-    flex: 1,
-    backgroundColor: palette.bgCanvas,
-  },
-  center: {
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
+  root: { flex: 1, backgroundColor: palette.bgCanvas },
+  center: { alignItems: 'center', justifyContent: 'center' },
   loadingText: {
     color: palette.accentBrass,
     fontSize: 22,
     fontFamily: 'Georgia',
     fontWeight: '700',
   },
-  main: {
-    flex: 1,
-  },
+  main: { flex: 1 },
   tabBar: {
     flexDirection: 'row',
     backgroundColor: palette.bgSurface,
     borderTopWidth: 1,
     borderTopColor: palette.borderHairline,
-    paddingVertical: 8,
-    paddingHorizontal: 6,
+    paddingVertical: 10,
+    paddingHorizontal: 8,
   },
   tabItem: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 3,
-    paddingVertical: 2,
+    gap: 4,
   },
-  tabLabel: {
-    color: palette.textMuted,
-    fontSize: 10,
-    fontWeight: '600',
-  },
-  tabLabelActive: {
-    color: palette.accentBrass,
-    fontWeight: '800',
-  },
+  tabLabel: { color: palette.textMuted, fontSize: 11, fontWeight: '600' },
+  tabLabelActive: { color: palette.accentBrass, fontWeight: '800' },
 });

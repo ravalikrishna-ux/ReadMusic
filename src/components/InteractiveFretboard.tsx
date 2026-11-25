@@ -62,13 +62,12 @@ export const InteractiveFretboard: React.FC<InteractiveFretboardProps> = ({
     <View style={styles.wrapper}>
       <View style={styles.topRow}>
         <Text style={styles.caption}>
-          INTERACTIVE FRETBOARD • STANDARD TUNING ({GUITAR_STANDARD_EADGBE.tuningName})
-          {leftHanded ? ' • LEFT-HANDED' : ''}
+          Guitar Neck {leftHanded ? '(Left-Handed)' : ''} · Tap any fret to play
         </Text>
         {lastTapped && (
           <View style={styles.readoutPill}>
             <Text style={styles.readoutText}>
-              String {lastTapped.stringNumber} • Fret {lastTapped.fret} → {lastTapped.label}
+              {lastTapped.label} · Fret {lastTapped.fret}
             </Text>
           </View>
         )}
