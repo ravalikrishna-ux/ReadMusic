@@ -101,6 +101,7 @@ export const StaffNotation: React.FC<StaffNotationProps> = ({
                 <Chip
                   key={m.index}
                   compact
+                  showSelectedCheck={false}
                   selected={inLoop}
                   mode={inLoop ? 'flat' : 'outlined'}
                   onPress={() => onMeasurePress(m.index)}

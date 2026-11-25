@@ -132,6 +132,7 @@ export const SightReadLabScreen: React.FC<SightReadLabScreenProps> = ({ onOpenPa
                     <Chip
                       key={p.id}
                       compact
+                      showSelectedCheck={false}
                       selected={active}
                       mode={active ? 'flat' : 'outlined'}
                       icon={

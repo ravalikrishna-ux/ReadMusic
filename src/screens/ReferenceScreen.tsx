@@ -159,6 +159,7 @@ export const ReferenceScreen: React.FC = () => {
               <Chip
                 key={dec}
                 compact
+                showSelectedCheck={false}
                 selected={decadeFilter === dec}
                 mode={decadeFilter === dec ? 'flat' : 'outlined'}
                 onPress={() => setDecadeFilter(dec)}
