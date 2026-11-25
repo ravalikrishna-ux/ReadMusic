@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Chip, Surface, Text } from 'react-native-paper';
+import { audioEngine } from '../core/audio/audioEngine';
 import {
   FretboardScaleMarker,
   getMidiAtFret,
@@ -7,7 +9,6 @@ import {
   midiToScientificPitch,
 } from '../core/music/guitarEngine';
 import { FretPosition } from '../core/music/types';
-import { audioEngine } from '../core/audio/audioEngine';
 import { palette, radius } from '../theme/tokens';
 
 interface InteractiveFretboardProps {
@@ -15,7 +16,7 @@ interface InteractiveFretboardProps {
   leftHanded?: boolean;
   scaleMarkers?: FretboardScaleMarker[];
   labelMode?: 'notes' | 'degrees';
-  hintPosition?: FretPosition | null; // Optional Peek Fret glow
+  hintPosition?: FretPosition | null;
   feedbackFret?: { stringNumber: number; fret: number; ok: boolean } | null;
   onFretPress?: (info: { stringNumber: number; fret: number; soundingMidi: number }) => void;
 }
@@ -37,7 +38,6 @@ export const InteractiveFretboard: React.FC<InteractiveFretboardProps> = ({
     label: string;
   } | null>(null);
 
-  // Display strings top-to-bottom: ① High E down to ⑥ Low E (standard guitarist perspective!)
   const orderedStrings = [...GUITAR_STANDARD_EADGBE.strings].sort(
     (a, b) => a.stringNumber - b.stringNumber
   );
@@ -59,23 +59,20 @@ export const InteractiveFretboard: React.FC<InteractiveFretboardProps> = ({
   };
 
   return (
-    <View style={styles.wrapper}>
+    <Surface elevation={1} style={styles.wrapper}>
       <View style={styles.topRow}>
-        <Text style={styles.caption}>
-          Guitar Neck {leftHanded ? '(Left-Handed)' : ''} · Tap any fret to play
+        <Text variant="labelLarge" style={styles.caption}>
+          Guitar Neck {leftHanded ? '(Left-Handed)' : ''} · Tap any fret
         </Text>
         {lastTapped && (
-          <View style={styles.readoutPill}>
-            <Text style={styles.readoutText}>
-              {lastTapped.label} · Fret {lastTapped.fret}
-            </Text>
-          </View>
+          <Chip compact style={styles.readoutChip} textStyle={styles.readoutText}>
+            {lastTapped.label} · Fret {lastTapped.fret}
+          </Chip>
         )}
       </View>
 
       <ScrollView horizontal showsHorizontalScrollIndicator={false}>
         <View style={styles.neckContainer}>
-          {/* Fret number header row */}
           <View style={styles.fretNumberRow}>
             <View style={styles.stringLabelCol} />
             {displayFrets.map((fret) => (
@@ -95,13 +92,11 @@ export const InteractiveFretboard: React.FC<InteractiveFretboardProps> = ({
             ))}
           </View>
 
-          {/* Strings ① to ⑥ */}
           <View style={styles.woodBoard}>
             {orderedStrings.map((str) => {
               const stringThickness = 1 + (str.stringNumber - 1) * 0.42;
               return (
                 <View key={str.stringNumber} style={styles.stringRow}>
-                  {/* String name badge */}
                   <View style={styles.stringLabelCol}>
                     <Text style={styles.stringBadgeText}>
                       {str.label.replace(/\d/, '')}
@@ -123,12 +118,9 @@ export const InteractiveFretboard: React.FC<InteractiveFretboardProps> = ({
                       lastTapped?.fret === fret;
 
                     const showInlayDot =
-                      str.stringNumber === 3 &&
-                      INLAY_FRETS.has(fret) &&
-                      fret !== 12;
+                      str.stringNumber === 3 && INLAY_FRETS.has(fret) && fret !== 12;
                     const showDoubleInlay =
-                      (str.stringNumber === 2 || str.stringNumber === 5) &&
-                      fret === 12;
+                      (str.stringNumber === 2 || str.stringNumber === 5) && fret === 12;
 
                     return (
                       <Pressable
@@ -140,12 +132,10 @@ export const InteractiveFretboard: React.FC<InteractiveFretboardProps> = ({
                           pressed && styles.fretCellPressed,
                         ]}
                       >
-                        {/* Fret inlay dot */}
                         {(showInlayDot || showDoubleInlay) && (
                           <View style={styles.inlayDot} pointerEvents="none" />
                         )}
 
-                        {/* Guitar string wire */}
                         <View
                           pointerEvents="none"
                           style={[
@@ -159,7 +149,6 @@ export const InteractiveFretboard: React.FC<InteractiveFretboardProps> = ({
                           ]}
                         />
 
-                        {/* Feedback, Hint, Scale Marker, or Tapped Indicator */}
                         {isFeedback ? (
                           <View
                             style={[
@@ -171,7 +160,7 @@ export const InteractiveFretboard: React.FC<InteractiveFretboardProps> = ({
                               },
                             ]}
                           >
-                            <Text style={styles.dotMarkerDarkText}>
+                            <Text style={styles.dotMarkerWhiteText}>
                               {feedbackFret.ok ? '✓' : '×'}
                             </Text>
                           </View>
@@ -182,11 +171,11 @@ export const InteractiveFretboard: React.FC<InteractiveFretboardProps> = ({
                               {
                                 backgroundColor: palette.accentBrass,
                                 borderWidth: 2,
-                                borderColor: '#FFF',
+                                borderColor: '#FFFFFF',
                               },
                             ]}
                           >
-                            <Text style={styles.dotMarkerDarkText}>
+                            <Text style={styles.dotMarkerWhiteText}>
                               {fret === 0 ? 'O' : fret}
                             </Text>
                           </View>
@@ -194,21 +183,11 @@ export const InteractiveFretboard: React.FC<InteractiveFretboardProps> = ({
                           <View
                             style={[
                               styles.dotMarker,
-                              marker.isRoot
-                                ? styles.rootMarker
-                                : styles.scaleToneMarker,
+                              marker.isRoot ? styles.rootMarker : styles.scaleToneMarker,
                             ]}
                           >
-                            <Text
-                              style={
-                                marker.isRoot
-                                  ? styles.dotMarkerDarkText
-                                  : styles.dotMarkerLightText
-                              }
-                            >
-                              {labelMode === 'degrees'
-                                ? marker.degreeLabel
-                                : marker.pitchName}
+                            <Text style={styles.dotMarkerWhiteText}>
+                              {labelMode === 'degrees' ? marker.degreeLabel : marker.pitchName}
                             </Text>
                           </View>
                         ) : isLast ? (
@@ -223,17 +202,17 @@ export const InteractiveFretboard: React.FC<InteractiveFretboardProps> = ({
           </View>
         </View>
       </ScrollView>
-    </View>
+    </Surface>
   );
 };
 
 const styles = StyleSheet.create({
   wrapper: {
     backgroundColor: palette.bgSurface,
-    borderRadius: radius.md,
+    borderRadius: radius.lg,
     borderWidth: 1,
     borderColor: palette.borderHairline,
-    padding: 12,
+    padding: 16,
   },
   topRow: {
     flexDirection: 'row',
@@ -244,24 +223,16 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   caption: {
-    color: palette.textMuted,
-    fontSize: 10,
-    fontWeight: '700',
-    letterSpacing: 0.8,
+    color: palette.textSecondary,
+    fontWeight: '600',
   },
-  readoutPill: {
-    backgroundColor: palette.accentBrassMuted,
-    borderColor: palette.accentBrassBorder,
-    borderWidth: 1,
-    borderRadius: radius.pill,
-    paddingHorizontal: 10,
-    paddingVertical: 3,
+  readoutChip: {
+    backgroundColor: palette.primaryContainer,
   },
   readoutText: {
-    color: palette.accentBrass,
-    fontSize: 11,
+    color: palette.onPrimaryContainer,
+    fontSize: 12,
     fontWeight: '700',
-    fontFamily: 'monospace',
   },
   neckContainer: {
     paddingBottom: 4,
@@ -269,55 +240,53 @@ const styles = StyleSheet.create({
   fretNumberRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 4,
+    marginBottom: 5,
   },
   stringLabelCol: {
-    width: 38,
+    width: 40,
     alignItems: 'center',
     justifyContent: 'center',
     flexDirection: 'row',
     gap: 2,
   },
   stringBadgeText: {
-    color: palette.textPrimary,
+    color: '#F5F3EE',
     fontSize: 11,
     fontWeight: '700',
   },
   stringNumSub: {
-    color: palette.textMuted,
+    color: '#A59E94',
     fontSize: 9,
   },
   fretNumCell: {
-    width: 52,
+    width: 54,
     alignItems: 'center',
   },
   openCellWidth: {
-    width: 48,
+    width: 50,
   },
   fretNumText: {
     color: palette.textMuted,
-    fontSize: 10,
-    fontFamily: 'monospace',
+    fontSize: 11,
+    fontWeight: '600',
   },
   fretNumAccent: {
-    color: palette.accentBrass,
-    fontWeight: '700',
+    color: palette.primary,
+    fontWeight: '800',
   },
   woodBoard: {
     backgroundColor: palette.fretboardWood,
-    borderRadius: radius.sm,
-    borderWidth: 1,
-    borderColor: '#3A312A',
+    borderRadius: radius.md,
     overflow: 'hidden',
   },
   stringRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    height: 36,
+    height: 37,
   },
   fretCell: {
-    width: 52,
-    height: 36,
+    width: 54,
+    height: 37,
     borderRightWidth: 2,
     borderRightColor: palette.fretWire,
     alignItems: 'center',
@@ -325,13 +294,13 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   openCell: {
-    width: 48,
-    backgroundColor: '#191512',
+    width: 50,
+    backgroundColor: '#211B17',
     borderRightWidth: 5,
     borderRightColor: palette.fretboardNut,
   },
   fretCellPressed: {
-    backgroundColor: 'rgba(217, 164, 65, 0.22)',
+    backgroundColor: 'rgba(15, 107, 110, 0.35)',
   },
   stringWire: {
     position: 'absolute',
@@ -346,38 +315,35 @@ const styles = StyleSheet.create({
     position: 'absolute',
   },
   dotMarker: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
+    width: 26,
+    height: 26,
+    borderRadius: 13,
     alignItems: 'center',
     justifyContent: 'center',
     zIndex: 2,
   },
   rootMarker: {
-    backgroundColor: palette.accentBrass,
+    backgroundColor: palette.primary,
+    borderWidth: 2,
+    borderColor: '#FFFFFF',
   },
   scaleToneMarker: {
-    backgroundColor: '#2D3442',
+    backgroundColor: '#485460',
     borderWidth: 1,
-    borderColor: '#5B677E',
+    borderColor: '#8391A1',
   },
-  dotMarkerDarkText: {
-    color: '#111317',
-    fontSize: 10,
+  dotMarkerWhiteText: {
+    color: '#FFFFFF',
+    fontSize: 11,
     fontWeight: '800',
-  },
-  dotMarkerLightText: {
-    color: palette.textPrimary,
-    fontSize: 10,
-    fontWeight: '700',
   },
   lastTapDot: {
     width: 14,
     height: 14,
     borderRadius: 7,
-    backgroundColor: 'rgba(217, 164, 65, 0.55)',
+    backgroundColor: 'rgba(217, 119, 6, 0.65)',
     borderWidth: 1.5,
-    borderColor: palette.accentBrass,
+    borderColor: '#FFFFFF',
     zIndex: 2,
   },
 });

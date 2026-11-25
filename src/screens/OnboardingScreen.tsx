@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
+import { Button, Card, Surface, Text } from 'react-native-paper';
 import { BookOpen, CheckCircle2, Compass, Layers } from 'lucide-react-native';
 import { TrackId } from '../core/music/types';
 import { DIAGNOSTIC_QUESTIONS } from '../data/curriculum';
@@ -36,12 +37,18 @@ export const OnboardingScreen: React.FC = () => {
       showsVerticalScrollIndicator={false}
     >
       <View style={styles.container}>
-        <Text style={styles.brand}>ReadMusic</Text>
+        <Text variant="titleMedium" style={styles.brand}>
+          ReadMusic
+        </Text>
 
         {step === 'track' ? (
           <View style={styles.block}>
-            <Text style={styles.headline}>What do you want to learn?</Text>
-            <Text style={styles.sub}>Pick one to start. You can switch anytime.</Text>
+            <Text variant="headlineMedium" style={styles.headline}>
+              What do you want to learn?
+            </Text>
+            <Text variant="bodyLarge" style={styles.sub}>
+              Pick one to start. You can switch anytime.
+            </Text>
 
             <View style={styles.cards}>
               {[
@@ -49,60 +56,75 @@ export const OnboardingScreen: React.FC = () => {
                   id: 'integrated' as TrackId,
                   title: 'Both (Recommended)',
                   desc: 'Music theory + reading sheet music together',
-                  icon: <Layers size={22} color={palette.accentBrass} />,
+                  icon: <Layers size={22} color={palette.primary} />,
                 },
                 {
                   id: 'theory' as TrackId,
                   title: 'Music Theory',
                   desc: 'Scales, chords & 80s/90s/00s hit songs',
-                  icon: <Compass size={22} color={palette.accentBrass} />,
+                  icon: <Compass size={22} color={palette.primary} />,
                 },
                 {
                   id: 'reading' as TrackId,
                   title: 'Read Sheet Music',
                   desc: 'Start with simple notes, play full songs',
-                  icon: <BookOpen size={22} color={palette.accentBrass} />,
+                  icon: <BookOpen size={22} color={palette.primary} />,
                 },
               ].map((opt) => {
                 const active = selectedTrack === opt.id;
                 return (
-                  <Pressable
+                  <Card
                     key={opt.id}
+                    mode={active ? 'elevated' : 'outlined'}
                     onPress={() => setSelectedTrack(opt.id)}
                     style={[styles.card, active && styles.cardActive]}
                   >
-                    <View style={styles.cardIcon}>{opt.icon}</View>
-                    <View style={{ flex: 1 }}>
-                      <Text style={styles.cardTitle}>{opt.title}</Text>
-                      <Text style={styles.cardDesc}>{opt.desc}</Text>
-                    </View>
-                    {active && <CheckCircle2 size={20} color={palette.accentBrass} />}
-                  </Pressable>
+                    <Card.Content style={styles.cardRow}>
+                      <View style={[styles.iconBox, active && styles.iconBoxActive]}>
+                        {opt.icon}
+                      </View>
+                      <View style={{ flex: 1 }}>
+                        <Text variant="titleMedium" style={{ fontWeight: '700' }}>
+                          {opt.title}
+                        </Text>
+                        <Text variant="bodyMedium" style={{ color: palette.textSecondary, marginTop: 2 }}>
+                          {opt.desc}
+                        </Text>
+                      </View>
+                      {active && <CheckCircle2 size={22} color={palette.primary} />}
+                    </Card.Content>
+                  </Card>
                 );
               })}
             </View>
 
-            <Pressable onPress={() => finishOnboarding()} style={styles.primaryBtn}>
-              <Text style={styles.primaryBtnText}>Start Learning →</Text>
-            </Pressable>
+            <Button
+              mode="contained"
+              contentStyle={{ paddingVertical: 8 }}
+              labelStyle={{ fontSize: 16, fontWeight: '700' }}
+              onPress={() => finishOnboarding()}
+              style={{ marginTop: 8 }}
+            >
+              Start Learning →
+            </Button>
 
-            <Pressable
+            <Button
+              mode="text"
               onPress={() => {
                 setDiagIdx(0);
                 setStep('diagnostic');
               }}
-              style={styles.secondaryLink}
             >
-              <Text style={styles.secondaryLinkText}>
-                Already know some theory or notes? Take 1-min skill check
-              </Text>
-            </Pressable>
+              Already know some theory or notes? Take 1-min skill check
+            </Button>
           </View>
         ) : (
           <View style={styles.block}>
             <View style={styles.diagTop}>
-              <Text style={styles.headline}>Quick Skill Check</Text>
-              <Text style={styles.counter}>
+              <Text variant="headlineSmall" style={styles.headline}>
+                Quick Skill Check
+              </Text>
+              <Text variant="titleSmall" style={{ color: palette.primary, fontWeight: '800' }}>
                 {diagIdx + 1} / {DIAGNOSTIC_QUESTIONS.length}
               </Text>
             </View>
@@ -110,36 +132,39 @@ export const OnboardingScreen: React.FC = () => {
             {(() => {
               const q = DIAGNOSTIC_QUESTIONS[diagIdx];
               return (
-                <View style={styles.quizCard}>
-                  <Text style={styles.quizPrompt}>{q.prompt}</Text>
+                <Surface elevation={1} style={styles.quizCard}>
+                  <Text variant="titleMedium" style={{ fontWeight: '600', lineHeight: 24 }}>
+                    {q.prompt}
+                  </Text>
                   <View style={styles.optList}>
                     {q.options.map((opt, idx) => (
-                      <Pressable
+                      <Button
                         key={opt}
+                        mode="outlined"
+                        contentStyle={{ justifyContent: 'flex-start', paddingVertical: 6 }}
                         onPress={() => {
                           const next = { ...diagAnswers, [q.id]: idx === q.correctIndex };
                           setDiagAnswers(next);
                           if (diagIdx + 1 >= DIAGNOSTIC_QUESTIONS.length) finishOnboarding(next);
                           else setDiagIdx(diagIdx + 1);
                         }}
-                        style={styles.optBtn}
                       >
-                        <Text style={styles.optText}>{opt}</Text>
-                      </Pressable>
+                        {opt}
+                      </Button>
                     ))}
-                    <Pressable
+                    <Button
+                      mode="text"
                       onPress={() => {
                         const next = { ...diagAnswers, [q.id]: false };
                         setDiagAnswers(next);
                         if (diagIdx + 1 >= DIAGNOSTIC_QUESTIONS.length) finishOnboarding(next);
                         else setDiagIdx(diagIdx + 1);
                       }}
-                      style={styles.skipBtn}
                     >
-                      <Text style={styles.skipText}>Not sure yet</Text>
-                    </Pressable>
+                      Not sure yet
+                    </Button>
                   </View>
-                </View>
+                </Surface>
               );
             })()}
           </View>
@@ -157,78 +182,38 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 24,
   },
-  container: { width: '100%', maxWidth: 520, gap: 24 },
-  brand: {
-    color: palette.accentBrass,
-    fontSize: 16,
-    fontWeight: '700',
-    fontFamily: 'Georgia',
-    letterSpacing: 0.4,
-  },
-  block: { gap: 16 },
-  headline: {
-    color: palette.textPrimary,
-    fontSize: 30,
-    fontWeight: '700',
-    fontFamily: 'Georgia',
-    lineHeight: 36,
-  },
-  sub: { color: palette.textSecondary, fontSize: 15 },
+  container: { width: '100%', maxWidth: 500, gap: 20 },
+  brand: { color: palette.primary, fontWeight: '800', letterSpacing: 0.3 },
+  block: { gap: 14 },
+  headline: { color: palette.textPrimary, fontWeight: '700' },
+  sub: { color: palette.textSecondary },
   cards: { gap: 12, marginTop: 4 },
   card: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 14,
     backgroundColor: palette.bgSurface,
-    borderWidth: 1.5,
-    borderColor: palette.borderHairline,
     borderRadius: radius.lg,
-    padding: 18,
+    borderColor: palette.borderHairline,
   },
   cardActive: {
-    borderColor: palette.accentBrass,
-    backgroundColor: palette.bgElevated,
+    borderWidth: 2,
+    borderColor: palette.primary,
+    backgroundColor: '#FFFFFF',
   },
-  cardIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: 12,
-    backgroundColor: palette.accentBrassMuted,
+  cardRow: { flexDirection: 'row', alignItems: 'center', gap: 14, paddingVertical: 14 },
+  iconBox: {
+    width: 46,
+    height: 46,
+    borderRadius: 14,
+    backgroundColor: palette.bgElevated,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  cardTitle: { color: palette.textPrimary, fontSize: 16, fontWeight: '700' },
-  cardDesc: { color: palette.textSecondary, fontSize: 13, marginTop: 3 },
-  primaryBtn: {
-    backgroundColor: palette.accentBrass,
-    borderRadius: radius.md,
-    paddingVertical: 16,
-    alignItems: 'center',
-    marginTop: 6,
-  },
-  primaryBtnText: { color: '#111317', fontSize: 16, fontWeight: '800' },
-  secondaryLink: { alignItems: 'center', paddingVertical: 8 },
-  secondaryLinkText: { color: palette.textSecondary, fontSize: 13, fontWeight: '600' },
-  diagTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' },
-  counter: { color: palette.accentBrass, fontSize: 14, fontWeight: '800', fontFamily: 'monospace' },
+  iconBoxActive: { backgroundColor: palette.primaryContainer },
+  diagTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   quizCard: {
     backgroundColor: palette.bgSurface,
     borderRadius: radius.lg,
-    borderWidth: 1,
-    borderColor: palette.borderHairline,
-    padding: 20,
+    padding: 22,
     gap: 16,
   },
-  quizPrompt: { color: palette.textPrimary, fontSize: 17, fontWeight: '600', lineHeight: 25 },
   optList: { gap: 10 },
-  optBtn: {
-    backgroundColor: palette.bgElevated,
-    borderWidth: 1,
-    borderColor: palette.borderHairline,
-    borderRadius: radius.md,
-    padding: 15,
-  },
-  optText: { color: palette.textPrimary, fontSize: 15, fontWeight: '600' },
-  skipBtn: { alignItems: 'center', paddingVertical: 10 },
-  skipText: { color: palette.textMuted, fontSize: 13, fontWeight: '600' },
 });

@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
+import { Button, Chip, SegmentedButtons, Surface, Text } from 'react-native-paper';
 import { ArrowLeft, CheckCircle2, Lightbulb } from 'lucide-react-native';
 import { InteractiveFretboard } from '../components/InteractiveFretboard';
 import { PracticePlayer } from '../components/PracticePlayer';
@@ -51,10 +52,9 @@ export const LessonDetailScreen: React.FC<LessonDetailScreenProps> = ({
   if (!entry) {
     return (
       <View style={styles.screen}>
-        <Pressable onPress={onBack} style={styles.backBtn}>
-          <ArrowLeft size={16} color={palette.textPrimary} />
-          <Text style={styles.backText}>Back</Text>
-        </Pressable>
+        <Button mode="text" onPress={onBack}>
+          Back
+        </Button>
       </View>
     );
   }
@@ -103,11 +103,11 @@ export const LessonDetailScreen: React.FC<LessonDetailScreenProps> = ({
     );
   };
 
-  const tabs: Array<{ id: LessonTab; label: string }> = [];
-  if (hasScore) tabs.push({ id: 'play', label: 'Play' });
-  tabs.push({ id: 'guide', label: 'Quick Guide' });
-  if (hasSongs) tabs.push({ id: 'songs', label: `Hit Songs (${linkedSongs.length})` });
-  if (hasQuiz) tabs.push({ id: 'quiz', label: 'Quick Check' });
+  const tabButtons: Array<{ value: LessonTab; label: string }> = [];
+  if (hasScore) tabButtons.push({ value: 'play', label: 'Play' });
+  tabButtons.push({ value: 'guide', label: 'Quick Guide' });
+  if (hasSongs) tabButtons.push({ value: 'songs', label: `Hit Songs (${linkedSongs.length})` });
+  if (hasQuiz) tabButtons.push({ value: 'quiz', label: 'Quick Check' });
 
   return (
     <ScrollView
@@ -115,42 +115,38 @@ export const LessonDetailScreen: React.FC<LessonDetailScreenProps> = ({
       contentContainerStyle={styles.content}
       showsVerticalScrollIndicator={false}
     >
-      {/* Clean Minimal Top Bar */}
       <View style={styles.topRow}>
-        <Pressable onPress={onBack} style={styles.backBtn}>
-          <ArrowLeft size={17} color={palette.textPrimary} />
-          <Text style={styles.backText}>Back</Text>
-        </Pressable>
-        <Text style={styles.lessonCode}>{lesson.number}</Text>
+        <Button
+          mode="text"
+          compact
+          onPress={onBack}
+          icon={({ size, color }) => <ArrowLeft size={size - 2} color={color} />}
+        >
+          Back
+        </Button>
+        <Chip compact style={styles.codeChip} textStyle={styles.codeChipText}>
+          {lesson.number}
+        </Chip>
       </View>
 
-      <Text style={styles.title}>{lesson.title}</Text>
+      <Text variant="headlineSmall" style={styles.title}>
+        {lesson.title}
+      </Text>
 
-      {/* Stepped Tabs — One Focused View at a Time */}
-      {tabs.length > 1 && (
-        <View style={styles.tabRow}>
-          {tabs.map((t) => {
-            const active = activeTab === t.id;
-            return (
-              <Pressable
-                key={t.id}
-                onPress={() => setActiveTab(t.id)}
-                style={[styles.tabBtn, active && styles.tabBtnActive]}
-              >
-                <Text style={[styles.tabText, active && styles.tabTextActive]}>{t.label}</Text>
-              </Pressable>
-            );
-          })}
-        </View>
+      {tabButtons.length > 1 && (
+        <SegmentedButtons
+          value={activeTab}
+          onValueChange={(v) => setActiveTab(v as LessonTab)}
+          buttons={tabButtons}
+        />
       )}
 
-      {/* TAB 1: PLAY (Sheet Music + Fretboard Immediately Above the Fold) */}
       {activeTab === 'play' && activeScore && (
         <View style={styles.section}>
           {freshDrill && (
-            <Pressable onPress={() => setFreshDrill(null)} style={styles.backToLessonLink}>
-              <Text style={styles.backToLessonText}>← Back to Lesson Piece</Text>
-            </Pressable>
+            <Button mode="text" compact onPress={() => setFreshDrill(null)} style={{ alignSelf: 'flex-start' }}>
+              ← Back to Lesson Piece
+            </Button>
           )}
           <PracticePlayer
             score={activeScore}
@@ -167,39 +163,41 @@ export const LessonDetailScreen: React.FC<LessonDetailScreenProps> = ({
         </View>
       )}
 
-      {/* TAB 2: QUICK GUIDE (Short Scannable Points + Fretboard) */}
       {activeTab === 'guide' && (
         <View style={styles.section}>
-          <View style={styles.card}>
+          <Surface elevation={1} style={styles.card}>
             {lesson.keyTakeaways.map((point, idx) => (
               <View key={idx} style={styles.bulletRow}>
                 <View style={styles.numDot}>
                   <Text style={styles.numDotText}>{idx + 1}</Text>
                 </View>
-                <Text style={styles.bulletText}>{point}</Text>
+                <Text variant="bodyMedium" style={styles.bulletText}>
+                  {point}
+                </Text>
               </View>
             ))}
 
-            <View style={styles.tipBox}>
-              <Lightbulb size={16} color={palette.accentBrass} style={{ marginTop: 2 }} />
-              <Text style={styles.tipText}>{lesson.guitarTip}</Text>
-            </View>
-          </View>
+            <Surface elevation={0} style={styles.tipBox}>
+              <Lightbulb size={17} color={palette.accentBrass} style={{ marginTop: 2 }} />
+              <Text variant="bodyMedium" style={styles.tipText}>
+                {lesson.guitarTip}
+              </Text>
+            </Surface>
+          </Surface>
 
           {activeScaleId && (
             <View style={styles.section}>
               <View style={styles.scaleBar}>
-                <Text style={styles.scaleTitle}>
+                <Text variant="titleMedium" style={{ fontWeight: '700' }}>
                   {pitchClassToName(activeRootPc)} {SCALES[activeScaleId].name}
                 </Text>
-                <Pressable
+                <Button
+                  mode="outlined"
+                  compact
                   onPress={() => setLabelMode((m) => (m === 'notes' ? 'degrees' : 'notes'))}
-                  style={styles.pillBtn}
                 >
-                  <Text style={styles.pillText}>
-                    {labelMode === 'notes' ? 'Notes' : 'Numbers'}
-                  </Text>
-                </Pressable>
+                  {labelMode === 'notes' ? 'Notes' : 'Numbers'}
+                </Button>
               </View>
 
               <InteractiveFretboard
@@ -213,7 +211,6 @@ export const LessonDetailScreen: React.FC<LessonDetailScreenProps> = ({
         </View>
       )}
 
-      {/* TAB 3: HIT SONGS */}
       {activeTab === 'songs' && (
         <View style={styles.section}>
           {linkedSongs.map((song) => (
@@ -229,46 +226,59 @@ export const LessonDetailScreen: React.FC<LessonDetailScreenProps> = ({
         </View>
       )}
 
-      {/* TAB 4: QUICK CHECK */}
       {activeTab === 'quiz' && lesson.quiz && (
-        <View style={styles.card}>
+        <Surface elevation={1} style={styles.card}>
           {lesson.quiz.map((q) => {
             const chosen = quizSelected[q.id];
             const answered = chosen !== undefined;
             const correct = chosen === q.correctIndex;
             return (
               <View key={q.id} style={styles.quizBlock}>
-                <Text style={styles.quizPrompt}>{q.prompt}</Text>
+                <Text variant="titleSmall" style={{ fontWeight: '700', lineHeight: 22 }}>
+                  {q.prompt}
+                </Text>
                 <View style={styles.quizOpts}>
                   {q.options.map((opt, idx) => {
                     const showRight = answered && idx === q.correctIndex;
                     const showWrong = answered && chosen === idx && !correct;
                     return (
-                      <Pressable
+                      <Button
                         key={opt}
+                        mode={showRight || showWrong ? 'contained-tonal' : 'outlined'}
+                        buttonColor={
+                          showRight
+                            ? palette.successMuted
+                            : showWrong
+                              ? palette.errorMuted
+                              : undefined
+                        }
+                        textColor={
+                          showRight
+                            ? palette.successEmerald
+                            : showWrong
+                              ? palette.errorCoral
+                              : palette.textPrimary
+                        }
+                        contentStyle={{ justifyContent: 'flex-start' }}
                         onPress={() => {
                           setQuizSelected((prev) => ({ ...prev, [q.id]: idx }));
                           if (idx === q.correctIndex) {
                             recordLessonProgress(lesson.id, { status: 'proficient' });
                           }
                         }}
-                        style={[
-                          styles.quizOpt,
-                          showRight && styles.quizOptRight,
-                          showWrong && styles.quizOptWrong,
-                        ]}
                       >
-                        <Text style={styles.quizOptText}>{opt}</Text>
-                      </Pressable>
+                        {opt}
+                      </Button>
                     );
                   })}
                 </View>
                 {answered && (
                   <Text
-                    style={[
-                      styles.quizExplain,
-                      { color: correct ? palette.successEmerald : palette.accentBrass },
-                    ]}
+                    variant="bodySmall"
+                    style={{
+                      color: correct ? palette.successEmerald : palette.accentBrass,
+                      fontWeight: '600',
+                    }}
                   >
                     {q.explanation}
                   </Text>
@@ -276,30 +286,29 @@ export const LessonDetailScreen: React.FC<LessonDetailScreenProps> = ({
               </View>
             );
           })}
-        </View>
+        </Surface>
       )}
 
-      {/* Simple Bottom Action Bar */}
       <View style={styles.footer}>
-        <Pressable
+        <Button
+          mode={isCompleted ? 'contained-tonal' : 'contained'}
+          buttonColor={isCompleted ? palette.successMuted : palette.primary}
+          textColor={isCompleted ? palette.successEmerald : '#FFFFFF'}
           onPress={() =>
             recordLessonProgress(lesson.id, {
               status: 'mastered',
               bestPitchAccuracy: Math.max(95, progress?.bestPitchAccuracy ?? 95),
             })
           }
-          style={[styles.doneBtn, isCompleted && styles.doneBtnActive]}
+          icon={({ size, color }) => <CheckCircle2 size={size - 2} color={color} />}
         >
-          <CheckCircle2 size={16} color={isCompleted ? palette.successEmerald : '#111317'} />
-          <Text style={[styles.doneText, isCompleted && { color: palette.successEmerald }]}>
-            {isCompleted ? 'Completed' : 'Mark Done'}
-          </Text>
-        </Pressable>
+          {isCompleted ? 'Completed' : 'Mark Done'}
+        </Button>
 
         {nextLesson && (
-          <Pressable onPress={() => onOpenLesson(nextLesson.id)} style={styles.nextBtn}>
-            <Text style={styles.nextText}>Next Lesson →</Text>
-          </Pressable>
+          <Button mode="contained-tonal" onPress={() => onOpenLesson(nextLesson.id)}>
+            Next Lesson →
+          </Button>
         )}
       </View>
     </ScrollView>
@@ -317,30 +326,16 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   topRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  backBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 4 },
-  backText: { color: palette.textPrimary, fontSize: 14, fontWeight: '700' },
-  lessonCode: { color: palette.accentBrass, fontSize: 12, fontWeight: '800', fontFamily: 'monospace' },
-  title: { color: palette.textPrimary, fontSize: 24, fontWeight: '700', fontFamily: 'Georgia' },
-  tabRow: {
-    flexDirection: 'row',
-    backgroundColor: palette.bgSurface,
-    borderRadius: radius.md,
-    padding: 4,
-    gap: 4,
-  },
-  tabBtn: { flex: 1, paddingVertical: 9, borderRadius: 9, alignItems: 'center' },
-  tabBtnActive: { backgroundColor: palette.accentBrass },
-  tabText: { color: palette.textSecondary, fontSize: 13, fontWeight: '700' },
-  tabTextActive: { color: '#111317', fontWeight: '800' },
+  codeChip: { backgroundColor: palette.primaryContainer },
+  codeChipText: { color: palette.onPrimaryContainer, fontWeight: '800', fontSize: 12 },
+  title: { color: palette.textPrimary, fontWeight: '700' },
   section: { gap: 14 },
-  backToLessonLink: { alignSelf: 'flex-start' },
-  backToLessonText: { color: palette.accentBrass, fontSize: 13, fontWeight: '700' },
   card: {
     backgroundColor: palette.bgSurface,
     borderRadius: radius.lg,
     borderWidth: 1,
     borderColor: palette.borderHairline,
-    padding: 18,
+    padding: 20,
     gap: 14,
   },
   bulletRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 12 },
@@ -348,61 +343,23 @@ const styles = StyleSheet.create({
     width: 24,
     height: 24,
     borderRadius: 12,
-    backgroundColor: palette.accentBrassMuted,
+    backgroundColor: palette.primaryContainer,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  numDotText: { color: palette.accentBrass, fontSize: 12, fontWeight: '800' },
-  bulletText: { color: palette.textPrimary, fontSize: 14, lineHeight: 21, flex: 1 },
+  numDotText: { color: palette.onPrimaryContainer, fontSize: 12, fontWeight: '800' },
+  bulletText: { color: palette.textPrimary, lineHeight: 21, flex: 1 },
   tipBox: {
     flexDirection: 'row',
     alignItems: 'flex-start',
     gap: 10,
     backgroundColor: palette.accentBrassMuted,
     borderRadius: radius.md,
-    padding: 13,
+    padding: 14,
   },
-  tipText: { color: palette.textPrimary, fontSize: 13, lineHeight: 20, flex: 1 },
+  tipText: { color: '#78350F', lineHeight: 20, flex: 1 },
   scaleBar: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  scaleTitle: { color: palette.textPrimary, fontSize: 16, fontWeight: '700', fontFamily: 'Georgia' },
-  pillBtn: {
-    backgroundColor: palette.bgSurface,
-    borderWidth: 1,
-    borderColor: palette.borderHairline,
-    borderRadius: radius.sm,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-  },
-  pillText: { color: palette.textPrimary, fontSize: 12, fontWeight: '700' },
   quizBlock: { gap: 10 },
-  quizPrompt: { color: palette.textPrimary, fontSize: 15, fontWeight: '700', lineHeight: 22 },
   quizOpts: { gap: 8 },
-  quizOpt: { backgroundColor: palette.bgElevated, borderRadius: radius.md, padding: 14 },
-  quizOptRight: { backgroundColor: palette.successMuted, borderWidth: 1, borderColor: palette.successEmerald },
-  quizOptWrong: { backgroundColor: palette.errorMuted, borderWidth: 1, borderColor: palette.errorCoral },
-  quizOptText: { color: palette.textPrimary, fontSize: 14, fontWeight: '600' },
-  quizExplain: { fontSize: 13, lineHeight: 19 },
   footer: { flexDirection: 'row', justifyContent: 'space-between', gap: 10, paddingTop: 6 },
-  doneBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    backgroundColor: palette.accentBrass,
-    borderRadius: radius.md,
-    paddingHorizontal: 18,
-    paddingVertical: 13,
-  },
-  doneBtnActive: {
-    backgroundColor: palette.successMuted,
-    borderWidth: 1,
-    borderColor: palette.successEmerald,
-  },
-  doneText: { color: '#111317', fontSize: 14, fontWeight: '800' },
-  nextBtn: {
-    backgroundColor: palette.bgElevated,
-    borderRadius: radius.md,
-    paddingHorizontal: 18,
-    paddingVertical: 13,
-  },
-  nextText: { color: palette.textPrimary, fontSize: 14, fontWeight: '700' },
 });

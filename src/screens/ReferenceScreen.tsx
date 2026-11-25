@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
+import { Button, Chip, Divider, List, SegmentedButtons, Surface, Text } from 'react-native-paper';
 import { Volume2 } from 'lucide-react-native';
 import { InteractiveFretboard } from '../components/InteractiveFretboard';
 import { SongBreakdownCard } from '../components/SongBreakdownCard';
@@ -64,86 +65,81 @@ export const ReferenceScreen: React.FC = () => {
       contentContainerStyle={styles.content}
       showsVerticalScrollIndicator={false}
     >
-      <Text style={styles.title}>Explore</Text>
+      <Text variant="headlineSmall" style={styles.title}>
+        Explore
+      </Text>
 
-      <View style={styles.tabs}>
-        {(
-          [
-            { id: 'scales', label: 'Scales' },
-            { id: 'songs', label: 'Hit Songs' },
-            { id: 'intervals', label: 'Intervals' },
-          ] as const
-        ).map((t) => {
-          const active = section === t.id;
-          return (
-            <Pressable
-              key={t.id}
-              onPress={() => setSection(t.id)}
-              style={[styles.tabBtn, active && styles.tabBtnActive]}
-            >
-              <Text style={[styles.tabText, active && styles.tabTextActive]}>{t.label}</Text>
-            </Pressable>
-          );
-        })}
-      </View>
+      <SegmentedButtons
+        value={section}
+        onValueChange={(v) => setSection(v as 'scales' | 'songs' | 'intervals')}
+        buttons={[
+          { value: 'scales', label: 'Scales' },
+          { value: 'songs', label: 'Hit Songs' },
+          { value: 'intervals', label: 'Intervals' },
+        ]}
+      />
 
       {section === 'scales' && (
         <View style={styles.block}>
-          {/* Root Strip */}
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
             <View style={styles.rowStrip}>
               {ROOTS.map((pc) => (
-                <Pressable
+                <Chip
                   key={pc}
+                  compact
+                  showSelectedCheck={false}
+                  selected={rootPc === pc}
+                  mode={rootPc === pc ? 'flat' : 'outlined'}
                   onPress={() => setRootPc(pc)}
-                  style={[styles.chip, rootPc === pc && styles.chipActive]}
                 >
-                  <Text style={[styles.chipText, rootPc === pc && styles.chipTextActive]}>
-                    {pitchClassToName(pc)}
-                  </Text>
-                </Pressable>
+                  {pitchClassToName(pc)}
+                </Chip>
               ))}
             </View>
           </ScrollView>
 
-          {/* Scale Strip */}
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
             <View style={styles.rowStrip}>
               {SCALE_KEYS.map((id) => (
-                <Pressable
+                <Chip
                   key={id}
+                  compact
+                  showSelectedCheck={false}
+                  selected={scaleId === id}
+                  mode={scaleId === id ? 'flat' : 'outlined'}
                   onPress={() => setScaleId(id)}
-                  style={[styles.chip, scaleId === id && styles.chipActive]}
                 >
-                  <Text style={[styles.chipText, scaleId === id && styles.chipTextActive]}>
-                    {SCALES[id].name}
-                  </Text>
-                </Pressable>
+                  {SCALES[id].name}
+                </Chip>
               ))}
             </View>
           </ScrollView>
 
-          {/* Clean Action Header */}
           <View style={styles.scaleHeader}>
             <View style={{ flex: 1 }}>
-              <Text style={styles.scaleTitle}>
+              <Text variant="titleMedium" style={{ fontWeight: '700' }}>
                 {pitchClassToName(rootPc)} {SCALES[scaleId].name}
               </Text>
-              <Text style={styles.scaleSub}>{SCALES[scaleId].formula}</Text>
+              <Text variant="labelMedium" style={{ color: palette.primary, marginTop: 2 }}>
+                {SCALES[scaleId].formula}
+              </Text>
             </View>
             <View style={styles.scaleBtns}>
-              <Pressable onPress={playCurrentScale} style={styles.playBtn}>
-                <Volume2 size={14} color="#111317" />
-                <Text style={styles.playText}>Play</Text>
-              </Pressable>
-              <Pressable
-                onPress={() => setLabelMode((m) => (m === 'notes' ? 'degrees' : 'notes'))}
-                style={styles.ghostBtn}
+              <Button
+                mode="contained"
+                compact
+                onPress={playCurrentScale}
+                icon={({ size, color }) => <Volume2 size={size - 3} color={color} />}
               >
-                <Text style={styles.ghostText}>
-                  {labelMode === 'notes' ? 'Notes' : 'Degrees'}
-                </Text>
-              </Pressable>
+                Play
+              </Button>
+              <Button
+                mode="outlined"
+                compact
+                onPress={() => setLabelMode((m) => (m === 'notes' ? 'degrees' : 'notes'))}
+              >
+                {labelMode === 'notes' ? 'Notes' : 'Degrees'}
+              </Button>
             </View>
           </View>
 
@@ -160,15 +156,15 @@ export const ReferenceScreen: React.FC = () => {
         <View style={styles.block}>
           <View style={styles.rowStrip}>
             {(['All', '80s', '90s', '00s'] as const).map((dec) => (
-              <Pressable
+              <Chip
                 key={dec}
+                compact
+                selected={decadeFilter === dec}
+                mode={decadeFilter === dec ? 'flat' : 'outlined'}
                 onPress={() => setDecadeFilter(dec)}
-                style={[styles.chip, decadeFilter === dec && styles.chipActive]}
               >
-                <Text style={[styles.chipText, decadeFilter === dec && styles.chipTextActive]}>
-                  {dec}
-                </Text>
-              </Pressable>
+                {dec}
+              </Chip>
             ))}
           </View>
 
@@ -187,29 +183,33 @@ export const ReferenceScreen: React.FC = () => {
       )}
 
       {section === 'intervals' && (
-        <View style={styles.block}>
-          {INTERVALS.map((iv) => (
-            <Pressable
-              key={iv.semitones}
-              onPress={() => {
-                audioEngine.playGuitarNote(45, 0.9, 0.26);
-                setTimeout(() => audioEngine.playGuitarNote(45 + iv.semitones, 1.0, 0.26), 340);
-              }}
-              style={styles.ivRow}
-            >
-              <View style={styles.ivBadge}>
-                <Text style={styles.ivBadgeText}>{iv.shortName}</Text>
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.ivName}>
-                  {iv.name} ({iv.semitones} {iv.semitones === 1 ? 'fret' : 'frets'})
-                </Text>
-                <Text style={styles.ivCue}>{iv.rockCue}</Text>
-              </View>
-              <Volume2 size={16} color={palette.accentBrass} />
-            </Pressable>
+        <Surface elevation={1} style={styles.listCard}>
+          {INTERVALS.map((iv, idx) => (
+            <React.Fragment key={iv.semitones}>
+              <List.Item
+                title={`${iv.name} (${iv.semitones} ${iv.semitones === 1 ? 'fret' : 'frets'})`}
+                description={iv.rockCue}
+                onPress={() => {
+                  audioEngine.playGuitarNote(45, 0.9, 0.26);
+                  setTimeout(() => audioEngine.playGuitarNote(45 + iv.semitones, 1.0, 0.26), 340);
+                }}
+                left={() => (
+                  <View style={styles.ivBadge}>
+                    <Text variant="labelLarge" style={{ color: palette.primary, fontWeight: '800' }}>
+                      {iv.shortName}
+                    </Text>
+                  </View>
+                )}
+                right={() => (
+                  <View style={{ justifyContent: 'center', paddingRight: 8 }}>
+                    <Volume2 size={17} color={palette.primary} />
+                  </View>
+                )}
+              />
+              {idx < INTERVALS.length - 1 && <Divider />}
+            </React.Fragment>
           ))}
-        </View>
+        </Surface>
       )}
     </ScrollView>
   );
@@ -225,31 +225,9 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     width: '100%',
   },
-  title: { color: palette.textPrimary, fontSize: 24, fontWeight: '700', fontFamily: 'Georgia' },
-  tabs: {
-    flexDirection: 'row',
-    backgroundColor: palette.bgSurface,
-    borderRadius: radius.md,
-    padding: 4,
-    gap: 4,
-  },
-  tabBtn: { flex: 1, paddingVertical: 9, borderRadius: 9, alignItems: 'center' },
-  tabBtnActive: { backgroundColor: palette.accentBrass },
-  tabText: { color: palette.textSecondary, fontSize: 13, fontWeight: '700' },
-  tabTextActive: { color: '#111317', fontWeight: '800' },
+  title: { color: palette.textPrimary, fontWeight: '800' },
   block: { gap: 12 },
-  rowStrip: { flexDirection: 'row', gap: 6 },
-  chip: {
-    backgroundColor: palette.bgSurface,
-    borderWidth: 1,
-    borderColor: palette.borderHairline,
-    borderRadius: radius.pill,
-    paddingHorizontal: 13,
-    paddingVertical: 7,
-  },
-  chipActive: { backgroundColor: palette.accentBrassMuted, borderColor: palette.accentBrass },
-  chipText: { color: palette.textSecondary, fontSize: 13, fontWeight: '600' },
-  chipTextActive: { color: palette.accentBrass, fontWeight: '700' },
+  rowStrip: { flexDirection: 'row', gap: 8, paddingVertical: 2 },
   scaleHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -257,47 +235,22 @@ const styles = StyleSheet.create({
     gap: 10,
     paddingTop: 4,
   },
-  scaleTitle: { color: palette.textPrimary, fontSize: 18, fontWeight: '700', fontFamily: 'Georgia' },
-  scaleSub: { color: palette.accentBrass, fontSize: 12, fontWeight: '700', fontFamily: 'monospace', marginTop: 2 },
   scaleBtns: { flexDirection: 'row', gap: 8 },
-  playBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    backgroundColor: palette.accentBrass,
-    borderRadius: radius.sm,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-  },
-  playText: { color: '#111317', fontSize: 13, fontWeight: '800' },
-  ghostBtn: {
+  listCard: {
     backgroundColor: palette.bgSurface,
+    borderRadius: radius.lg,
     borderWidth: 1,
     borderColor: palette.borderHairline,
-    borderRadius: radius.sm,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-  },
-  ghostText: { color: palette.textPrimary, fontSize: 13, fontWeight: '600' },
-  ivRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    backgroundColor: palette.bgSurface,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: palette.borderHairline,
-    padding: 14,
+    overflow: 'hidden',
   },
   ivBadge: {
-    width: 42,
+    width: 44,
     height: 36,
     borderRadius: radius.sm,
-    backgroundColor: palette.bgElevated,
+    backgroundColor: palette.primaryContainer,
     alignItems: 'center',
     justifyContent: 'center',
+    alignSelf: 'center',
+    marginLeft: 12,
   },
-  ivBadgeText: { color: palette.accentBrass, fontSize: 13, fontWeight: '800', fontFamily: 'monospace' },
-  ivName: { color: palette.textPrimary, fontSize: 14, fontWeight: '700' },
-  ivCue: { color: palette.textSecondary, fontSize: 12, marginTop: 2 },
 });

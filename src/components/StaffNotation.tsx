@@ -1,5 +1,6 @@
 import React from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
+import { Chip, Surface, Text } from 'react-native-paper';
 import Svg, { Circle, Ellipse, G, Line, Rect, Text as SvgText } from 'react-native-svg';
 import {
   formatCircledString,
@@ -52,7 +53,7 @@ export const StaffNotation: React.FC<StaffNotationProps> = ({
   const isPaper = theme === 'paper';
   const bg = isPaper ? palette.paperBg : palette.darkSheetBg;
   const ink = isPaper ? palette.paperInk : palette.darkSheetInk;
-  const mutedInk = isPaper ? palette.paperInkMuted : palette.textSecondary;
+  const mutedInk = isPaper ? palette.paperInkMuted : '#9CA3AF';
   const staffLineColor = isPaper ? palette.paperStaffLine : palette.darkSheetStaffLine;
 
   const keyInfo = KEY_SIGNATURES[score.keySignature];
@@ -62,33 +63,34 @@ export const StaffNotation: React.FC<StaffNotationProps> = ({
   }
 
   const clefWidth = 58 + Math.abs(keyInfo.accidentals) * 11 + 26;
-  const measureWidth = measuresPerSystem >= 4 ? 196 : 260;
+  const measureWidth = measuresPerSystem >= 4 ? 196 : 265;
   const svgWidth = clefWidth + measuresPerSystem * measureWidth + 16;
   const peekAllowed = showPeekFret && score.allowPeekFret;
 
   return (
-    <View
+    <Surface
+      elevation={1}
       style={[
         styles.sheetCard,
         {
           backgroundColor: bg,
-          borderColor: isPaper ? palette.paperBorder : palette.borderHairline,
+          borderColor: isPaper ? palette.paperBorder : '#2B3140',
         },
       ]}
     >
-      {/* Clean minimal sheet title bar */}
       <View style={styles.sheetHeader}>
-        <Text style={[styles.sheetTitle, { color: ink }]}>{score.title}</Text>
-        <Text style={[styles.sheetMeta, { color: mutedInk }]}>
+        <Text variant="titleMedium" style={[styles.sheetTitle, { color: ink }]}>
+          {score.title}
+        </Text>
+        <Text variant="labelMedium" style={{ color: mutedInk }}>
           {keyInfo.label} · {score.timeSignature[0]}/{score.timeSignature[1]}
           {score.isCapstone ? ' · Full Song' : ''}
         </Text>
       </View>
 
-      {/* Loop bar selector (only shown when user opens Loop picker) */}
       {showLoopPicker && onMeasurePress && (
         <View style={styles.loopBar}>
-          <Text style={[styles.loopLabel, { color: mutedInk }]}>
+          <Text variant="labelMedium" style={{ color: mutedInk }}>
             {loopRange ? `Looping bars ${loopRange[0] + 1}–${loopRange[1] + 1}` : 'Tap bars to loop:'}
           </Text>
           <View style={styles.measureChips}>
@@ -96,26 +98,15 @@ export const StaffNotation: React.FC<StaffNotationProps> = ({
               const inLoop =
                 loopRange !== null && m.index >= loopRange[0] && m.index <= loopRange[1];
               return (
-                <Pressable
+                <Chip
                   key={m.index}
+                  compact
+                  selected={inLoop}
+                  mode={inLoop ? 'flat' : 'outlined'}
                   onPress={() => onMeasurePress(m.index)}
-                  style={[
-                    styles.measureChip,
-                    {
-                      borderColor: inLoop ? palette.accentBrass : palette.borderHairline,
-                      backgroundColor: inLoop ? palette.accentBrassMuted : 'transparent',
-                    },
-                  ]}
                 >
-                  <Text
-                    style={[
-                      styles.measureChipText,
-                      { color: inLoop ? palette.accentBrass : mutedInk },
-                    ]}
-                  >
-                    {m.index + 1}
-                  </Text>
-                </Pressable>
+                  {m.index + 1}
+                </Chip>
               );
             })}
           </View>
@@ -146,21 +137,12 @@ export const StaffNotation: React.FC<StaffNotationProps> = ({
                 );
               })}
 
-              <Line
-                x1={10}
-                y1={TOP_LINE_Y}
-                x2={10}
-                y2={BOTTOM_LINE_Y}
-                stroke={ink}
-                strokeWidth={1.6}
-              />
+              <Line x1={10} y1={TOP_LINE_Y} x2={10} y2={BOTTOM_LINE_Y} stroke={ink} strokeWidth={1.6} />
 
-              {/* Treble Clef */}
               <SvgText x={16} y={BOTTOM_LINE_Y - 1} fontSize={46} fill={ink} fontFamily="Georgia">
                 𝄞
               </SvgText>
 
-              {/* Key Signature */}
               {keyInfo.accidentals > 0 &&
                 SHARP_STEPS.slice(0, keyInfo.accidentals).map((step, i) => (
                   <SvgText
@@ -188,27 +170,12 @@ export const StaffNotation: React.FC<StaffNotationProps> = ({
                   </SvgText>
                 ))}
 
-              {/* Time Signature */}
               {sysIdx === 0 && (
                 <G>
-                  <SvgText
-                    x={clefWidth - 22}
-                    y={TOP_LINE_Y + 18}
-                    fontSize={18}
-                    fontWeight="700"
-                    fill={ink}
-                    fontFamily="Georgia"
-                  >
+                  <SvgText x={clefWidth - 22} y={TOP_LINE_Y + 18} fontSize={18} fontWeight="700" fill={ink} fontFamily="Georgia">
                     {score.timeSignature[0]}
                   </SvgText>
-                  <SvgText
-                    x={clefWidth - 22}
-                    y={TOP_LINE_Y + 40}
-                    fontSize={18}
-                    fontWeight="700"
-                    fill={ink}
-                    fontFamily="Georgia"
-                  >
+                  <SvgText x={clefWidth - 22} y={TOP_LINE_Y + 40} fontSize={18} fontWeight="700" fill={ink} fontFamily="Georgia">
                     {score.timeSignature[1]}
                   </SvgText>
                 </G>
@@ -232,7 +199,7 @@ export const StaffNotation: React.FC<StaffNotationProps> = ({
                         y={TOP_LINE_Y - 12}
                         width={measureWidth - 2}
                         height={LINE_SPACING * 4 + 24}
-                        fill="rgba(226, 172, 72, 0.14)"
+                        fill="rgba(15, 107, 110, 0.09)"
                         rx={4}
                       />
                     )}
@@ -241,7 +208,7 @@ export const StaffNotation: React.FC<StaffNotationProps> = ({
                       x={xStart + 5}
                       y={16}
                       fontSize={9}
-                      fill={inLoop ? palette.accentBrass : mutedInk}
+                      fill={inLoop ? palette.primary : mutedInk}
                       fontWeight={inLoop ? '700' : '500'}
                     >
                       {measure.index + 1}
@@ -253,7 +220,7 @@ export const StaffNotation: React.FC<StaffNotationProps> = ({
                         y={16}
                         fontSize={10}
                         fontWeight="700"
-                        fill={measure.positionMarker ? palette.accentBrass : ink}
+                        fill={measure.positionMarker ? palette.primary : ink}
                       >
                         {[measure.sectionLabel, measure.positionMarker].filter(Boolean).join(' · ')}
                       </SvgText>
@@ -317,7 +284,7 @@ export const StaffNotation: React.FC<StaffNotationProps> = ({
                                 y={TOP_LINE_Y - 4}
                                 width={22}
                                 height={LINE_SPACING * 4 + 8}
-                                fill="rgba(226, 172, 72, 0.22)"
+                                fill="rgba(217, 119, 6, 0.16)"
                                 rx={5}
                               />
                             )}
@@ -369,8 +336,8 @@ export const StaffNotation: React.FC<StaffNotationProps> = ({
                               y={TOP_LINE_Y - 8}
                               width={26}
                               height={LINE_SPACING * 4 + 16}
-                              fill="rgba(226, 172, 72, 0.22)"
-                              rx={5}
+                              fill="rgba(217, 119, 6, 0.16)"
+                              rx={6}
                             />
                           )}
 
@@ -407,14 +374,7 @@ export const StaffNotation: React.FC<StaffNotationProps> = ({
                           {isDotted && <Circle cx={cx + 10.5} cy={cy - 1} r={2} fill={noteColor} />}
 
                           {hasStem && (
-                            <Line
-                              x1={stemX}
-                              y1={cy}
-                              x2={stemX}
-                              y2={stemY2}
-                              stroke={noteColor}
-                              strokeWidth={1.5}
-                            />
+                            <Line x1={stemX} y1={cy} x2={stemX} y2={stemY2} stroke={noteColor} strokeWidth={1.5} />
                           )}
 
                           {(isEighth || isSixteenth) && (
@@ -447,7 +407,7 @@ export const StaffNotation: React.FC<StaffNotationProps> = ({
                               x={cx - 10}
                               y={SYSTEM_HEIGHT - 8}
                               fontSize={10}
-                              fontWeight="600"
+                              fontWeight="700"
                               fill={isActive ? palette.accentBrass : mutedInk}
                             >
                               {`${formatCircledString(primary.hint.stringNumber)}f${primary.hint.fret}`}
@@ -482,7 +442,7 @@ export const StaffNotation: React.FC<StaffNotationProps> = ({
           ))}
         </View>
       </ScrollView>
-    </View>
+    </Surface>
   );
 };
 
@@ -490,7 +450,7 @@ const styles = StyleSheet.create({
   sheetCard: {
     borderRadius: radius.lg,
     borderWidth: 1,
-    padding: 16,
+    padding: 18,
   },
   sheetHeader: {
     flexDirection: 'row',
@@ -500,37 +460,18 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   sheetTitle: {
-    fontSize: 17,
     fontWeight: '700',
-    fontFamily: 'Georgia',
-  },
-  sheetMeta: {
-    fontSize: 12,
-    fontWeight: '600',
   },
   loopBar: {
     flexDirection: 'row',
     alignItems: 'center',
     flexWrap: 'wrap',
     gap: 8,
-    marginBottom: 8,
-  },
-  loopLabel: {
-    fontSize: 12,
+    marginBottom: 10,
   },
   measureChips: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 6,
-  },
-  measureChip: {
-    borderWidth: 1,
-    borderRadius: radius.sm,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-  },
-  measureChipText: {
-    fontSize: 12,
-    fontWeight: '700',
   },
 });

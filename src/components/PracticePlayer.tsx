@@ -1,12 +1,15 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
+import { Button, Chip, IconButton, SegmentedButtons, Surface, Text } from 'react-native-paper';
 import {
   Eye,
   EyeOff,
   Maximize2,
   Mic,
   MicOff,
+  Minus,
   Play,
+  Plus,
   Repeat,
   RotateCcw,
   Square,
@@ -65,7 +68,7 @@ export const PracticePlayer: React.FC<PracticePlayerProps> = ({
     fret: number;
     ok: boolean;
   } | null>(null);
-  const [statusPrompt, setStatusPrompt] = useState<string>('Play the gold note');
+  const [statusPrompt, setStatusPrompt] = useState<string>('Tap or play the amber note');
   const [isPlayingTempo, setIsPlayingTempo] = useState(false);
   const [isPreviewing, setIsPreviewing] = useState(false);
   const [micActive, setMicActive] = useState(false);
@@ -96,7 +99,7 @@ export const PracticePlayer: React.FC<PracticePlayerProps> = ({
     attemptsRef.current = 0;
     hitsRef.current = 0;
     startTimeRef.current = Date.now();
-    setStatusPrompt(score.allowPeekFret ? 'Tap or play the gold note' : 'Pure sheet reading — no hints');
+    setStatusPrompt(score.allowPeekFret ? 'Tap or play the amber note' : 'Pure sheet reading — no hints');
   }, [score.id]);
 
   const playableEvents: FlatPlayableEvent[] = useMemo(() => {
@@ -255,9 +258,8 @@ export const PracticePlayer: React.FC<PracticePlayerProps> = ({
 
     const stepEvent = () => {
       if (idx >= playableEvents.length) {
-        if (loopRange) {
-          idx = 0;
-        } else {
+        if (loopRange) idx = 0;
+        else {
           setIsPlayingTempo(false);
           finishRun('tempo');
           return;
@@ -302,7 +304,7 @@ export const PracticePlayer: React.FC<PracticePlayerProps> = ({
     const endTimer = setTimeout(() => {
       setIsPreviewing(false);
       setCurrentIdx(0);
-      setStatusPrompt('Your turn — play the gold note');
+      setStatusPrompt('Your turn — play the amber note');
     }, cumulativeMs + 250);
     previewTimersRef.current.push(endTimer);
   };
@@ -315,7 +317,7 @@ export const PracticePlayer: React.FC<PracticePlayerProps> = ({
     attemptsRef.current = 0;
     hitsRef.current = 0;
     startTimeRef.current = Date.now();
-    setStatusPrompt('Tap or play the gold note');
+    setStatusPrompt('Tap or play the amber note');
   };
 
   const handleMeasureTap = (measureIdx: number) => {
@@ -334,116 +336,125 @@ export const PracticePlayer: React.FC<PracticePlayerProps> = ({
 
   return (
     <View style={styles.container}>
-      {/* Single Clean Control Bar */}
-      <View style={styles.controlBar}>
-        {/* Mode Switch */}
-        <View style={styles.segmented}>
-          <Pressable
-            onPress={() => {
-              stopAllPlayback();
-              setMode('wait');
-              setStatusPrompt('Tap or play the gold note');
-            }}
-            style={[styles.segBtn, mode === 'wait' && styles.segBtnActive]}
-          >
-            <Text style={[styles.segText, mode === 'wait' && styles.segTextActive]}>Wait</Text>
-          </Pressable>
-          <Pressable
-            onPress={() => {
-              stopAllPlayback();
-              setMode('tempo');
-              setStatusPrompt('Press Start for metronome');
-            }}
-            style={[styles.segBtn, mode === 'tempo' && styles.segBtnActive]}
-          >
-            <Text style={[styles.segText, mode === 'tempo' && styles.segTextActive]}>Tempo</Text>
-          </Pressable>
-        </View>
+      {/* Clean Material 3 Control Bar */}
+      <Surface elevation={1} style={styles.controlBar}>
+        <SegmentedButtons
+          value={mode}
+          onValueChange={(v) => {
+            stopAllPlayback();
+            setMode(v as PracticeMode);
+            setStatusPrompt(v === 'wait' ? 'Tap or play the amber note' : 'Press Start for metronome');
+          }}
+          density="small"
+          style={styles.segButtons}
+          buttons={[
+            { value: 'wait', label: 'Wait' },
+            { value: 'tempo', label: 'Tempo' },
+          ]}
+        />
 
-        {/* Primary Play / Listen */}
-        {mode === 'tempo' ? (
-          <Pressable
-            onPress={isPlayingTempo ? stopAllPlayback : startTempoRun}
-            style={[styles.primaryBtn, isPlayingTempo && styles.stopBtn]}
-          >
-            {isPlayingTempo ? <Square size={13} color="#111317" /> : <Play size={13} color="#111317" />}
-            <Text style={styles.primaryBtnText}>{isPlayingTempo ? 'Stop' : 'Start'}</Text>
-          </Pressable>
-        ) : null}
+        <View style={styles.midControls}>
+          {mode === 'tempo' && (
+            <Button
+              mode="contained"
+              compact
+              buttonColor={isPlayingTempo ? palette.errorCoral : palette.primary}
+              onPress={isPlayingTempo ? stopAllPlayback : startTempoRun}
+              icon={({ size, color }) =>
+                isPlayingTempo ? <Square size={size - 4} color={color} /> : <Play size={size - 4} color={color} />
+              }
+            >
+              {isPlayingTempo ? 'Stop' : 'Start'}
+            </Button>
+          )}
 
-        <Pressable onPress={togglePreview} style={styles.pillBtn}>
-          <Volume2 size={14} color={isPreviewing ? palette.accentBrass : palette.textPrimary} />
-          <Text style={[styles.pillText, isPreviewing && { color: palette.accentBrass }]}>
+          <Button
+            mode="contained-tonal"
+            compact
+            onPress={togglePreview}
+            icon={({ size, color }) => <Volume2 size={size - 3} color={color} />}
+          >
             {isPreviewing ? 'Stop' : 'Listen'}
-          </Text>
-        </Pressable>
+          </Button>
 
-        {/* Compact BPM */}
-        <View style={styles.bpmBox}>
-          <Pressable onPress={() => setBpm((v) => Math.max(48, v - 6))} style={styles.bpmBtn}>
-            <Text style={styles.bpmBtnTxt}>−</Text>
-          </Pressable>
-          <Text style={styles.bpmVal}>{bpm}</Text>
-          <Pressable onPress={() => setBpm((v) => Math.min(144, v + 6))} style={styles.bpmBtn}>
-            <Text style={styles.bpmBtnTxt}>+</Text>
-          </Pressable>
+          <View style={styles.bpmGroup}>
+            <IconButton
+              size={16}
+              mode="contained-tonal"
+              icon={({ size, color }) => <Minus size={size} color={color} />}
+              onPress={() => setBpm((v) => Math.max(48, v - 6))}
+              style={styles.smallIconBtn}
+            />
+            <Text variant="labelLarge" style={styles.bpmText}>
+              {bpm}
+            </Text>
+            <IconButton
+              size={16}
+              mode="contained-tonal"
+              icon={({ size, color }) => <Plus size={size} color={color} />}
+              onPress={() => setBpm((v) => Math.min(144, v + 6))}
+              style={styles.smallIconBtn}
+            />
+          </View>
         </View>
 
-        {/* Secondary Utility Icons */}
-        <View style={styles.iconGroup}>
-          <Pressable
+        <View style={styles.rightControls}>
+          <Chip
+            compact
+            selected={micActive}
             onPress={toggleMic}
-            accessibilityLabel="Toggle guitar microphone"
-            style={[styles.iconPill, micActive && styles.micOn]}
+            icon={({ size, color }) =>
+              micActive ? <Mic size={size - 2} color={color} /> : <MicOff size={size - 2} color={color} />
+            }
           >
-            {micActive ? (
-              <Mic size={15} color={palette.successEmerald} />
-            ) : (
-              <MicOff size={15} color={palette.textSecondary} />
-            )}
-            <Text style={[styles.iconPillText, micActive && { color: palette.successEmerald }]}>
-              Mic
-            </Text>
-          </Pressable>
+            Mic
+          </Chip>
 
-          <Pressable
-            onPress={() => score.allowPeekFret && setPeekFretOn((v) => !v)}
+          <Chip
+            compact
+            selected={peekFretOn && score.allowPeekFret}
             disabled={!score.allowPeekFret}
-            style={[styles.iconPill, !score.allowPeekFret && { opacity: 0.45 }]}
+            onPress={() => score.allowPeekFret && setPeekFretOn((v) => !v)}
+            icon={({ size, color }) =>
+              peekFretOn && score.allowPeekFret ? (
+                <Eye size={size - 2} color={color} />
+              ) : (
+                <EyeOff size={size - 2} color={color} />
+              )
+            }
           >
-            {peekFretOn && score.allowPeekFret ? (
-              <Eye size={15} color={palette.accentBrass} />
-            ) : (
-              <EyeOff size={15} color={palette.textMuted} />
-            )}
-            <Text style={styles.iconPillText}>
-              {score.allowPeekFret ? (peekFretOn ? 'Hint' : 'No Hint') : 'No Hint'}
-            </Text>
-          </Pressable>
+            {score.allowPeekFret ? (peekFretOn ? 'Hint' : 'Off') : 'No Hint'}
+          </Chip>
 
-          <Pressable
+          <IconButton
+            size={17}
+            selected={showLoopPicker || loopRange !== null}
+            mode={showLoopPicker || loopRange ? 'contained-tonal' : undefined}
+            icon={({ size, color }) => <Repeat size={size} color={color} />}
             onPress={() => setShowLoopPicker((v) => !v)}
-            style={[styles.iconBtn, (showLoopPicker || loopRange) && styles.iconBtnActive]}
             accessibilityLabel="Loop bars"
-          >
-            <Repeat size={15} color={showLoopPicker || loopRange ? palette.accentBrass : palette.textSecondary} />
-          </Pressable>
-
-          <Pressable
+            style={styles.smallIconBtn}
+          />
+          <IconButton
+            size={17}
+            selected={musicStandWide}
+            mode={musicStandWide ? 'contained-tonal' : undefined}
+            icon={({ size, color }) => <Maximize2 size={size} color={color} />}
             onPress={() => setMusicStandWide((v) => !v)}
-            style={[styles.iconBtn, musicStandWide && styles.iconBtnActive]}
             accessibilityLabel="Wide view"
-          >
-            <Maximize2 size={15} color={musicStandWide ? palette.accentBrass : palette.textSecondary} />
-          </Pressable>
-
-          <Pressable onPress={resetPass} style={styles.iconBtn} accessibilityLabel="Restart">
-            <RotateCcw size={15} color={palette.textSecondary} />
-          </Pressable>
+            style={styles.smallIconBtn}
+          />
+          <IconButton
+            size={17}
+            icon={({ size, color }) => <RotateCcw size={size} color={color} />}
+            onPress={resetPass}
+            accessibilityLabel="Restart"
+            style={styles.smallIconBtn}
+          />
         </View>
-      </View>
+      </Surface>
 
-      {/* Sheet Music */}
+      {/* Sheet Music Paper */}
       <StaffNotation
         score={score}
         theme={state.notationTheme}
@@ -461,51 +472,56 @@ export const PracticePlayer: React.FC<PracticePlayerProps> = ({
         }}
       />
 
-      {/* Crisp 1-Line Live Cue */}
-      <View style={styles.cueBar}>
-        <Text style={styles.cueText}>{statusPrompt}</Text>
+      {/* Crisp Live Cue Banner */}
+      <Surface elevation={0} style={styles.cueBar}>
+        <Text variant="bodyMedium" style={styles.cueText}>
+          {statusPrompt}
+        </Text>
         <View style={styles.cueRight}>
           {activeHintPos && (
-            <Text style={styles.cueHint}>
+            <Chip compact style={styles.hintChip} textStyle={styles.hintChipText}>
               {formatCircledString(activeHintPos.stringNumber)} Fret {activeHintPos.fret}
-            </Text>
+            </Chip>
           )}
           {micActive && livePitch && (
-            <Text style={styles.cueMic}>
+            <Chip compact style={styles.micChip} textStyle={styles.micChipText}>
               {midiToScientificPitch(livePitch.midi).name}
               {midiToScientificPitch(livePitch.midi).octave}
-            </Text>
+            </Chip>
           )}
         </View>
-      </View>
+      </Surface>
 
-      {micError && <Text style={styles.errText}>{micError} — tap the fretboard below instead.</Text>}
+      {micError && (
+        <Text variant="bodySmall" style={{ color: palette.errorCoral, paddingHorizontal: 4 }}>
+          {micError} — tap the fretboard below instead.
+        </Text>
+      )}
 
-      {/* Clean Session Complete Card */}
       {runSummary && (
-        <View style={styles.doneCard}>
-          <View style={styles.doneTop}>
-            <Text style={styles.doneTitle}>
+        <Surface elevation={1} style={styles.doneCard}>
+          <View>
+            <Text variant="titleMedium" style={{ fontWeight: '700' }}>
               {runSummary.pitchAccuracy >= 90 ? 'Nailed it!' : 'Nice run!'}
             </Text>
-            <Text style={styles.doneStats}>
+            <Text variant="bodySmall" style={{ color: palette.primary, fontWeight: '700' }}>
               {runSummary.pitchAccuracy}% accuracy · {runSummary.bpm} BPM
             </Text>
           </View>
           <View style={styles.doneActions}>
-            <Pressable onPress={resetPass} style={styles.pillBtn}>
-              <Text style={styles.pillText}>Play Again</Text>
-            </Pressable>
+            <Button mode="outlined" compact onPress={resetPass}>
+              Play Again
+            </Button>
             {onGenerateFreshSightRead && (
-              <Pressable onPress={onGenerateFreshSightRead} style={styles.primaryBtn}>
-                <Text style={styles.primaryBtnText}>Try a New One →</Text>
-              </Pressable>
+              <Button mode="contained" compact onPress={onGenerateFreshSightRead}>
+                Try New One
+              </Button>
             )}
           </View>
-        </View>
+        </Surface>
       )}
 
-      {/* Interactive Touch Fretboard */}
+      {/* Interactive Fretboard */}
       <InteractiveFretboard
         fretCount={12}
         leftHanded={state.leftHanded}
@@ -520,117 +536,46 @@ export const PracticePlayer: React.FC<PracticePlayerProps> = ({
 };
 
 const styles = StyleSheet.create({
-  container: { gap: 12 },
+  container: { gap: 14 },
   controlBar: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     alignItems: 'center',
     justifyContent: 'space-between',
-    gap: 8,
+    gap: 10,
     backgroundColor: palette.bgSurface,
     borderWidth: 1,
     borderColor: palette.borderHairline,
-    borderRadius: radius.md,
-    padding: 8,
-  },
-  segmented: {
-    flexDirection: 'row',
-    backgroundColor: palette.bgCanvas,
-    borderRadius: radius.sm,
-    padding: 3,
-  },
-  segBtn: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 6 },
-  segBtnActive: { backgroundColor: palette.accentBrass },
-  segText: { color: palette.textSecondary, fontSize: 12, fontWeight: '700' },
-  segTextActive: { color: '#111317' },
-  primaryBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    backgroundColor: palette.accentBrass,
-    borderRadius: radius.sm,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-  },
-  stopBtn: { backgroundColor: palette.errorCoral },
-  primaryBtnText: { color: '#111317', fontSize: 13, fontWeight: '800' },
-  pillBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    backgroundColor: palette.bgElevated,
-    borderRadius: radius.sm,
+    borderRadius: radius.lg,
     paddingHorizontal: 12,
     paddingVertical: 8,
   },
-  pillText: { color: palette.textPrimary, fontSize: 12, fontWeight: '700' },
-  bpmBox: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    backgroundColor: palette.bgCanvas,
-    borderRadius: radius.sm,
-    paddingHorizontal: 6,
-    paddingVertical: 4,
-  },
-  bpmBtn: {
-    width: 24,
-    height: 24,
-    borderRadius: 6,
-    backgroundColor: palette.bgElevated,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  bpmBtnTxt: { color: palette.textPrimary, fontSize: 14, fontWeight: '700' },
-  bpmVal: {
-    color: palette.textPrimary,
-    fontSize: 12,
-    fontWeight: '700',
-    fontFamily: 'monospace',
-    minWidth: 28,
-    textAlign: 'center',
-  },
-  iconGroup: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  iconPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-    backgroundColor: palette.bgElevated,
-    borderRadius: radius.sm,
-    paddingHorizontal: 10,
-    paddingVertical: 7,
-  },
-  micOn: { backgroundColor: palette.successMuted },
-  iconPillText: { color: palette.textPrimary, fontSize: 12, fontWeight: '600' },
-  iconBtn: {
-    padding: 8,
-    borderRadius: radius.sm,
-    backgroundColor: palette.bgElevated,
-  },
-  iconBtnActive: {
-    backgroundColor: palette.accentBrassMuted,
-  },
+  segButtons: { width: 168 },
+  midControls: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  bpmGroup: { flexDirection: 'row', alignItems: 'center', gap: 2 },
+  bpmText: { minWidth: 32, textAlign: 'center', fontWeight: '700' },
+  smallIconBtn: { margin: 0 },
+  rightControls: { flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' },
   cueBar: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    backgroundColor: palette.bgSurface,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: palette.borderHairline,
-  },
-  cueText: { color: palette.textPrimary, fontSize: 14, fontWeight: '600' },
-  cueRight: { flexDirection: 'row', gap: 10, alignItems: 'center' },
-  cueHint: { color: palette.accentBrass, fontSize: 13, fontWeight: '800', fontFamily: 'monospace' },
-  cueMic: { color: palette.successEmerald, fontSize: 13, fontWeight: '800', fontFamily: 'monospace' },
-  errText: { color: palette.errorCoral, fontSize: 12, paddingHorizontal: 4 },
-  doneCard: {
     backgroundColor: palette.bgElevated,
     borderRadius: radius.md,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+  },
+  cueText: { color: palette.textPrimary, fontWeight: '600' },
+  cueRight: { flexDirection: 'row', gap: 8, alignItems: 'center' },
+  hintChip: { backgroundColor: palette.accentBrassMuted },
+  hintChipText: { color: '#92400E', fontWeight: '800', fontSize: 12 },
+  micChip: { backgroundColor: palette.successMuted },
+  micChipText: { color: palette.successEmerald, fontWeight: '800', fontSize: 12 },
+  doneCard: {
+    backgroundColor: palette.bgSurface,
+    borderRadius: radius.lg,
     borderWidth: 1,
-    borderColor: palette.accentBrassBorder,
+    borderColor: palette.primaryContainer,
     padding: 16,
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -638,8 +583,5 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     gap: 12,
   },
-  doneTop: { gap: 2 },
-  doneTitle: { color: palette.textPrimary, fontSize: 18, fontWeight: '700', fontFamily: 'Georgia' },
-  doneStats: { color: palette.accentBrass, fontSize: 13, fontWeight: '700', fontFamily: 'monospace' },
   doneActions: { flexDirection: 'row', gap: 8 },
 });

@@ -1,5 +1,6 @@
 import React from 'react';
-import { Linking, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Linking, StyleSheet, View } from 'react-native';
+import { Button, Card, Chip, Surface, Text } from 'react-native-paper';
 import { ExternalLink, Volume2 } from 'lucide-react-native';
 import { audioEngine } from '../core/audio/audioEngine';
 import { SCALES } from '../core/music/guitarEngine';
@@ -24,70 +25,84 @@ export const SongBreakdownCard: React.FC<SongBreakdownCardProps> = ({
   };
 
   return (
-    <View style={styles.card}>
-      <View style={styles.header}>
-        <View style={{ flex: 1 }}>
-          <Text style={styles.title}>{song.title}</Text>
-          <Text style={styles.sub}>
-            {song.artist} · {song.decade} · {song.key}
-          </Text>
-        </View>
-        <View style={styles.scaleBadge}>
-          <Text style={styles.scaleBadgeText}>{SCALES[song.scaleId].name}</Text>
-        </View>
-      </View>
-
-      {/* Clean Chord Strip */}
-      <View style={styles.chordRow}>
-        {song.progressionChords.map((chord, idx) => (
-          <View key={`${song.id}-${idx}`} style={styles.chordPill}>
-            <Text style={styles.chordName}>{chord}</Text>
-            <Text style={styles.roman}>{song.progressionRoman[idx]}</Text>
+    <Card mode="elevated" style={styles.card}>
+      <Card.Content style={styles.content}>
+        <View style={styles.header}>
+          <View style={{ flex: 1 }}>
+            <Text variant="titleMedium" style={styles.title}>
+              {song.title}
+            </Text>
+            <Text variant="bodySmall" style={{ color: palette.textSecondary }}>
+              {song.artist} · {song.decade} · {song.key}
+            </Text>
           </View>
-        ))}
-      </View>
+          <Chip compact style={styles.scaleChip} textStyle={styles.scaleChipText}>
+            {SCALES[song.scaleId].name}
+          </Chip>
+        </View>
 
-      {/* Single punchy insight */}
-      <Text style={styles.insight}>{song.guitarInsight}</Text>
+        <View style={styles.chordRow}>
+          {song.progressionChords.map((chord, idx) => (
+            <Surface key={`${song.id}-${idx}`} elevation={0} style={styles.chordTile}>
+              <Text variant="labelLarge" style={styles.chordName}>
+                {chord}
+              </Text>
+              <Text variant="labelSmall" style={styles.roman}>
+                {song.progressionRoman[idx]}
+              </Text>
+            </Surface>
+          ))}
+        </View>
 
-      {/* Compact Actions */}
-      <View style={styles.actions}>
-        <Pressable onPress={playScalePreview} style={styles.primaryBtn}>
-          <Volume2 size={13} color="#111317" />
-          <Text style={styles.primaryBtnText}>Hear Scale</Text>
-        </Pressable>
-        {onExploreScale && (
-          <Pressable
-            onPress={() => onExploreScale(song.rootPitchClass, song.scaleId)}
-            style={styles.ghostBtn}
+        <Text variant="bodyMedium" style={styles.insight}>
+          {song.guitarInsight}
+        </Text>
+
+        <View style={styles.actions}>
+          <Button
+            mode="contained"
+            compact
+            onPress={playScalePreview}
+            icon={({ size, color }) => <Volume2 size={size - 3} color={color} />}
           >
-            <Text style={styles.ghostBtnText}>See on Neck</Text>
-          </Pressable>
-        )}
-        <Pressable
-          onPress={() =>
-            Linking.openURL(
-              `https://open.spotify.com/search/${encodeURIComponent(song.spotifyQuery)}`
-            ).catch(() => {})
-          }
-          style={styles.ghostBtn}
-        >
-          <ExternalLink size={12} color={palette.textSecondary} />
-          <Text style={styles.ghostBtnText}>Spotify</Text>
-        </Pressable>
-        <Pressable
-          onPress={() =>
-            Linking.openURL(
-              `https://www.youtube.com/results?search_query=${encodeURIComponent(song.youtubeQuery)}`
-            ).catch(() => {})
-          }
-          style={styles.ghostBtn}
-        >
-          <ExternalLink size={12} color={palette.textSecondary} />
-          <Text style={styles.ghostBtnText}>YouTube</Text>
-        </Pressable>
-      </View>
-    </View>
+            Hear Scale
+          </Button>
+          {onExploreScale && (
+            <Button
+              mode="contained-tonal"
+              compact
+              onPress={() => onExploreScale(song.rootPitchClass, song.scaleId)}
+            >
+              See on Neck
+            </Button>
+          )}
+          <Button
+            mode="outlined"
+            compact
+            onPress={() =>
+              Linking.openURL(
+                `https://open.spotify.com/search/${encodeURIComponent(song.spotifyQuery)}`
+              ).catch(() => {})
+            }
+            icon={({ size, color }) => <ExternalLink size={size - 4} color={color} />}
+          >
+            Spotify
+          </Button>
+          <Button
+            mode="outlined"
+            compact
+            onPress={() =>
+              Linking.openURL(
+                `https://www.youtube.com/results?search_query=${encodeURIComponent(song.youtubeQuery)}`
+              ).catch(() => {})
+            }
+            icon={({ size, color }) => <ExternalLink size={size - 4} color={color} />}
+          >
+            YouTube
+          </Button>
+        </View>
+      </Card.Content>
+    </Card>
   );
 };
 
@@ -95,92 +110,28 @@ const styles = StyleSheet.create({
   card: {
     backgroundColor: palette.bgSurface,
     borderRadius: radius.lg,
-    borderWidth: 1,
-    borderColor: palette.borderHairline,
-    padding: 16,
-    gap: 12,
   },
+  content: { gap: 14 },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
     gap: 10,
   },
-  title: {
-    color: palette.textPrimary,
-    fontSize: 17,
-    fontWeight: '700',
-    fontFamily: 'Georgia',
-  },
-  sub: {
-    color: palette.textSecondary,
-    fontSize: 13,
-    marginTop: 2,
-  },
-  scaleBadge: {
-    backgroundColor: palette.accentBrassMuted,
-    borderRadius: radius.pill,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-  },
-  scaleBadgeText: {
-    color: palette.accentBrass,
-    fontSize: 11,
-    fontWeight: '700',
-  },
-  chordRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
-  chordPill: {
+  title: { fontWeight: '700', color: palette.textPrimary },
+  scaleChip: { backgroundColor: palette.primaryContainer },
+  scaleChipText: { color: palette.onPrimaryContainer, fontSize: 11, fontWeight: '700' },
+  chordRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  chordTile: {
     backgroundColor: palette.bgElevated,
     borderRadius: radius.sm,
-    paddingHorizontal: 12,
-    paddingVertical: 7,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
     alignItems: 'center',
-    minWidth: 56,
+    minWidth: 60,
   },
-  chordName: {
-    color: palette.textPrimary,
-    fontSize: 14,
-    fontWeight: '800',
-  },
-  roman: {
-    color: palette.accentBrass,
-    fontSize: 11,
-    fontWeight: '700',
-    fontFamily: 'monospace',
-    marginTop: 1,
-  },
-  insight: {
-    color: palette.textSecondary,
-    fontSize: 13,
-    lineHeight: 19,
-  },
-  actions: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
-  primaryBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    backgroundColor: palette.accentBrass,
-    borderRadius: radius.sm,
-    paddingHorizontal: 12,
-    paddingVertical: 7,
-  },
-  primaryBtnText: { color: '#111317', fontSize: 12, fontWeight: '800' },
-  ghostBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-    backgroundColor: palette.bgElevated,
-    borderRadius: radius.sm,
-    paddingHorizontal: 11,
-    paddingVertical: 7,
-  },
-  ghostBtnText: { color: palette.textPrimary, fontSize: 12, fontWeight: '600' },
+  chordName: { color: palette.textPrimary, fontWeight: '800' },
+  roman: { color: palette.primary, fontWeight: '700', marginTop: 1 },
+  insight: { color: palette.textSecondary, lineHeight: 20 },
+  actions: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
 });

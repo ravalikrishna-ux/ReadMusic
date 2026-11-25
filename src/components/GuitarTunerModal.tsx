@@ -1,8 +1,13 @@
 import React, { useEffect, useState } from 'react';
-import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Modal, StyleSheet, View } from 'react-native';
+import { Button, IconButton, Surface, Text } from 'react-native-paper';
 import { Mic, MicOff, Volume2, X } from 'lucide-react-native';
 import { audioEngine } from '../core/audio/audioEngine';
-import { GUITAR_STANDARD_EADGBE, midiToFrequency, midiToScientificPitch } from '../core/music/guitarEngine';
+import {
+  GUITAR_STANDARD_EADGBE,
+  midiToFrequency,
+  midiToScientificPitch,
+} from '../core/music/guitarEngine';
 import { DetectedPitch } from '../core/music/types';
 import { palette, radius } from '../theme/tokens';
 
@@ -45,22 +50,23 @@ export const GuitarTunerModal: React.FC<GuitarTunerModalProps> = ({ visible, onC
   return (
     <Modal visible={visible} transparent animationType="none" onRequestClose={onClose}>
       <View style={styles.backdrop}>
-        <View style={styles.card}>
+        <Surface elevation={4} style={styles.card}>
           <View style={styles.topRow}>
-            <Text style={styles.title}>Standard Guitar Tuner (E A D G B E)</Text>
-            <Pressable
+            <Text variant="titleMedium" style={{ fontWeight: '700' }}>
+              Guitar Tuner (E A D G B E)
+            </Text>
+            <IconButton
+              size={18}
+              icon={({ size, color }) => <X size={size} color={color} />}
               onPress={onClose}
-              accessibilityRole="button"
               accessibilityLabel="Close tuner"
-              style={{ padding: 6 }}
-            >
-              <X size={18} color={palette.textSecondary} />
-            </Pressable>
+              style={{ margin: 0 }}
+            />
           </View>
 
-          {/* Live Readout */}
-          <View style={styles.meterBox}>
+          <Surface elevation={0} style={styles.meterBox}>
             <Text
+              variant="displaySmall"
               style={[
                 styles.bigNote,
                 inTune && { color: palette.successEmerald },
@@ -68,12 +74,12 @@ export const GuitarTunerModal: React.FC<GuitarTunerModalProps> = ({ visible, onC
             >
               {detectedInfo ? `${detectedInfo.name}${detectedInfo.octave}` : '—'}
             </Text>
-            <Text style={styles.hzText}>
+            <Text variant="bodySmall" style={{ color: palette.textSecondary }}>
               {pitch
-                ? `${pitch.frequencyHz} Hz • ${pitch.cents > 0 ? `+${pitch.cents}` : pitch.cents} cents`
+                ? `${pitch.frequencyHz} Hz · ${pitch.cents > 0 ? `+${pitch.cents}` : pitch.cents} cents`
                 : listening
-                  ? 'Pluck any open string cleanly...'
-                  : 'Tap Enable Mic or pluck reference pitches below'}
+                  ? 'Pluck any open string...'
+                  : 'Turn on mic or tap a string below'}
             </Text>
             {pitch && (
               <View style={styles.centsTrack}>
@@ -83,48 +89,50 @@ export const GuitarTunerModal: React.FC<GuitarTunerModalProps> = ({ visible, onC
                     styles.centsNeedle,
                     {
                       left: `${Math.max(5, Math.min(95, 50 + pitch.cents))}%`,
-                      backgroundColor: inTune
-                        ? palette.successEmerald
-                        : palette.accentBrass,
+                      backgroundColor: inTune ? palette.successEmerald : palette.primary,
                     },
                   ]}
                 />
               </View>
             )}
-          </View>
+          </Surface>
 
-          <Pressable
+          <Button
+            mode="contained"
+            buttonColor={listening ? palette.successEmerald : palette.primary}
             onPress={toggleListening}
-            style={[styles.micBtn, listening && styles.micBtnActive]}
+            icon={({ size, color }) =>
+              listening ? <Mic size={size - 2} color={color} /> : <MicOff size={size - 2} color={color} />
+            }
           >
-            {listening ? <Mic size={16} color="#111317" /> : <MicOff size={16} color="#111317" />}
-            <Text style={styles.micBtnText}>
-              {listening ? 'Stop Microphone' : 'Enable Live Mic Tuner'}
+            {listening ? 'Stop Microphone' : 'Enable Live Mic'}
+          </Button>
+
+          {error && (
+            <Text variant="bodySmall" style={{ color: palette.errorCoral, textAlign: 'center' }}>
+              {error}
             </Text>
-          </Pressable>
+          )}
 
-          {error && <Text style={styles.errorText}>{error}</Text>}
+          <Text variant="labelSmall" style={{ color: palette.textMuted, fontWeight: '700' }}>
+            TAP TO HEAR REFERENCE PITCH
+          </Text>
 
-          {/* Reference Pitch Buttons */}
-          <Text style={styles.refLabel}>REFERENCE PITCHES (TAP TO HEAR)</Text>
           <View style={styles.stringGrid}>
             {GUITAR_STANDARD_EADGBE.strings.map((s) => (
-              <Pressable
+              <Button
                 key={s.stringNumber}
-                onPress={() => audioEngine.playGuitarNote(s.openMidi, 1.8, 0.3)}
+                mode="contained-tonal"
+                compact
                 style={styles.stringBtn}
+                onPress={() => audioEngine.playGuitarNote(s.openMidi, 1.8, 0.3)}
+                icon={({ size, color }) => <Volume2 size={size - 4} color={color} />}
               >
-                <Volume2 size={13} color={palette.accentBrass} />
-                <Text style={styles.stringBtnTitle}>
-                  ({s.stringNumber}) {s.label}
-                </Text>
-                <Text style={styles.stringBtnHz}>
-                  {midiToFrequency(s.openMidi).toFixed(1)} Hz
-                </Text>
-              </Pressable>
+                {s.label} ({midiToFrequency(s.openMidi).toFixed(0)}Hz)
+              </Button>
             ))}
           </View>
-        </View>
+        </Surface>
       </View>
     </Modal>
   );
@@ -133,60 +141,35 @@ export const GuitarTunerModal: React.FC<GuitarTunerModalProps> = ({ visible, onC
 const styles = StyleSheet.create({
   backdrop: {
     flex: 1,
-    backgroundColor: 'rgba(8, 10, 14, 0.82)',
+    backgroundColor: 'rgba(15, 23, 32, 0.45)',
     alignItems: 'center',
     justifyContent: 'center',
     padding: 20,
   },
   card: {
     width: '100%',
-    maxWidth: 440,
+    maxWidth: 430,
     backgroundColor: palette.bgSurface,
-    borderRadius: radius.lg,
-    borderWidth: 1,
-    borderColor: palette.borderStrong,
-    padding: 20,
+    borderRadius: 24,
+    padding: 22,
     gap: 14,
   },
-  topRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  title: {
-    color: palette.textPrimary,
-    fontSize: 16,
-    fontWeight: '700',
-    fontFamily: 'Georgia',
-  },
+  topRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   meterBox: {
-    backgroundColor: palette.bgCanvas,
+    backgroundColor: palette.bgElevated,
     borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: palette.borderHairline,
     padding: 18,
     alignItems: 'center',
-    gap: 8,
+    gap: 6,
   },
-  bigNote: {
-    color: palette.accentBrass,
-    fontSize: 40,
-    fontWeight: '800',
-    fontFamily: 'monospace',
-  },
-  hzText: {
-    color: palette.textSecondary,
-    fontSize: 12,
-    fontFamily: 'monospace',
-  },
+  bigNote: { color: palette.primary, fontWeight: '800' },
   centsTrack: {
     width: '100%',
-    height: 10,
-    backgroundColor: palette.bgElevated,
-    borderRadius: 5,
-    marginTop: 6,
+    height: 8,
+    backgroundColor: palette.borderHairline,
+    borderRadius: 4,
+    marginTop: 8,
     position: 'relative',
-    overflow: 'hidden',
   },
   centsCenterLine: {
     position: 'absolute',
@@ -198,64 +181,12 @@ const styles = StyleSheet.create({
   },
   centsNeedle: {
     position: 'absolute',
-    top: 1,
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    marginLeft: -4,
+    top: -1,
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    marginLeft: -5,
   },
-  micBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    backgroundColor: palette.accentBrass,
-    borderRadius: radius.md,
-    paddingVertical: 12,
-  },
-  micBtnActive: {
-    backgroundColor: palette.successEmerald,
-  },
-  micBtnText: {
-    color: '#111317',
-    fontSize: 14,
-    fontWeight: '800',
-  },
-  errorText: {
-    color: palette.errorCoral,
-    fontSize: 12,
-    textAlign: 'center',
-  },
-  refLabel: {
-    color: palette.textMuted,
-    fontSize: 10,
-    fontWeight: '700',
-    letterSpacing: 0.8,
-  },
-  stringGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
-  stringBtn: {
-    width: '31%',
-    backgroundColor: palette.bgElevated,
-    borderWidth: 1,
-    borderColor: palette.borderHairline,
-    borderRadius: radius.sm,
-    padding: 10,
-    alignItems: 'center',
-    gap: 3,
-  },
-  stringBtnTitle: {
-    color: palette.textPrimary,
-    fontSize: 13,
-    fontWeight: '700',
-    fontFamily: 'monospace',
-  },
-  stringBtnHz: {
-    color: palette.textMuted,
-    fontSize: 10,
-    fontFamily: 'monospace',
-  },
+  stringGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  stringBtn: { width: '48%', flexGrow: 1 },
 });

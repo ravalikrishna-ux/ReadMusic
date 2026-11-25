@@ -1,8 +1,9 @@
 import { StatusBar } from 'expo-status-bar';
 import React, { useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
+import { PaperProvider, Surface, Text } from 'react-native-paper';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
-import { BookOpen, Compass, Music, Settings } from 'lucide-react-native';
+import { BookOpen, Check, Compass, Music, Settings } from 'lucide-react-native';
 import { GuitarTunerModal } from './src/components/GuitarTunerModal';
 import { PaywallModal } from './src/components/PaywallModal';
 import { LearnScreen } from './src/screens/LearnScreen';
@@ -12,6 +13,7 @@ import { ReferenceScreen } from './src/screens/ReferenceScreen';
 import { SettingsScreen } from './src/screens/SettingsScreen';
 import { SightReadLabScreen } from './src/screens/SightReadLabScreen';
 import { AppStoreProvider, useAppStore } from './src/store/useAppStore';
+import { readMusicPaperTheme } from './src/theme/paperTheme';
 import { palette } from './src/theme/tokens';
 
 type TabId = 'learn' | 'practice' | 'explore' | 'settings';
@@ -26,7 +28,9 @@ const ReadMusicShell: React.FC = () => {
   if (!hydrated) {
     return (
       <View style={[styles.root, styles.center]}>
-        <Text style={styles.loadingText}>ReadMusic</Text>
+        <Text variant="headlineSmall" style={{ color: palette.primary, fontWeight: '800' }}>
+          ReadMusic
+        </Text>
       </View>
     );
   }
@@ -34,7 +38,7 @@ const ReadMusicShell: React.FC = () => {
   if (!state.hasCompletedOnboarding) {
     return (
       <SafeAreaView style={styles.root}>
-        <StatusBar style="light" />
+        <StatusBar style="dark" />
         <OnboardingScreen />
       </SafeAreaView>
     );
@@ -42,7 +46,7 @@ const ReadMusicShell: React.FC = () => {
 
   return (
     <SafeAreaView style={styles.root}>
-      <StatusBar style="light" />
+      <StatusBar style="dark" />
 
       <View style={styles.main}>
         {activeLessonId ? (
@@ -66,8 +70,8 @@ const ReadMusicShell: React.FC = () => {
         )}
       </View>
 
-      {/* Clean 4-Tab Navigation Bar */}
-      <View style={styles.tabBar}>
+      {/* Material Design 3 Bottom Navigation Bar with Tonal Pill Indicator */}
+      <Surface elevation={2} style={styles.tabBar}>
         {(
           [
             { id: 'learn', label: 'Learn', Icon: BookOpen },
@@ -86,12 +90,22 @@ const ReadMusicShell: React.FC = () => {
               }}
               style={styles.tabItem}
             >
-              <Icon size={20} color={isCurrent ? palette.accentBrass : palette.textMuted} />
-              <Text style={[styles.tabLabel, isCurrent && styles.tabLabelActive]}>{label}</Text>
+              <View style={[styles.pillIndicator, isCurrent && styles.pillIndicatorActive]}>
+                <Icon
+                  size={20}
+                  color={isCurrent ? palette.onPrimaryContainer : palette.textSecondary}
+                />
+              </View>
+              <Text
+                variant="labelSmall"
+                style={[styles.tabLabel, isCurrent && styles.tabLabelActive]}
+              >
+                {label}
+              </Text>
             </Pressable>
           );
         })}
-      </View>
+      </Surface>
 
       <PaywallModal
         visible={paywallOpen}
@@ -109,9 +123,16 @@ const ReadMusicShell: React.FC = () => {
 export default function App() {
   return (
     <SafeAreaProvider>
-      <AppStoreProvider>
-        <ReadMusicShell />
-      </AppStoreProvider>
+      <PaperProvider
+        theme={readMusicPaperTheme}
+        settings={{
+          icon: ({ size, color }) => <Check size={size} color={color} />,
+        }}
+      >
+        <AppStoreProvider>
+          <ReadMusicShell />
+        </AppStoreProvider>
+      </PaperProvider>
     </SafeAreaProvider>
   );
 }
@@ -119,20 +140,14 @@ export default function App() {
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: palette.bgCanvas },
   center: { alignItems: 'center', justifyContent: 'center' },
-  loadingText: {
-    color: palette.accentBrass,
-    fontSize: 22,
-    fontFamily: 'Georgia',
-    fontWeight: '700',
-  },
   main: { flex: 1 },
   tabBar: {
     flexDirection: 'row',
     backgroundColor: palette.bgSurface,
     borderTopWidth: 1,
     borderTopColor: palette.borderHairline,
-    paddingVertical: 10,
-    paddingHorizontal: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 10,
   },
   tabItem: {
     flex: 1,
@@ -140,6 +155,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 4,
   },
-  tabLabel: { color: palette.textMuted, fontSize: 11, fontWeight: '600' },
-  tabLabelActive: { color: palette.accentBrass, fontWeight: '800' },
+  pillIndicator: {
+    paddingHorizontal: 18,
+    paddingVertical: 5,
+    borderRadius: 16,
+  },
+  pillIndicatorActive: {
+    backgroundColor: palette.primaryContainer,
+  },
+  tabLabel: { color: palette.textSecondary, fontWeight: '600' },
+  tabLabelActive: { color: palette.textPrimary, fontWeight: '800' },
 });

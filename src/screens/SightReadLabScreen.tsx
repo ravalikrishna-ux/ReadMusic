@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
+import { Button, Card, Chip, SegmentedButtons, Surface, Text } from 'react-native-paper';
 import { Lock, Shuffle, SlidersHorizontal } from 'lucide-react-native';
 import { PracticePlayer } from '../components/PracticePlayer';
 import { KeySignatureId, PlayableScore } from '../core/music/types';
@@ -84,135 +85,146 @@ export const SightReadLabScreen: React.FC<SightReadLabScreenProps> = ({ onOpenPa
       contentContainerStyle={styles.content}
       showsVerticalScrollIndicator={false}
     >
-      {/* Clean Header */}
       <View style={styles.header}>
-        <Text style={styles.title}>Practice</Text>
-        <View style={styles.modeSwitch}>
-          <Pressable
-            onPress={() => setTab('random')}
-            style={[styles.modeBtn, tab === 'random' && styles.modeBtnActive]}
-          >
-            <Text style={[styles.modeText, tab === 'random' && styles.modeTextActive]}>
-              Random
-            </Text>
-          </Pressable>
-          <Pressable
-            onPress={() => setTab('songs')}
-            style={[styles.modeBtn, tab === 'songs' && styles.modeBtnActive]}
-          >
-            <Text style={[styles.modeText, tab === 'songs' && styles.modeTextActive]}>
-              Songs ({SCORE_LIST.length})
-            </Text>
-          </Pressable>
-        </View>
+        <Text variant="headlineSmall" style={styles.title}>
+          Practice
+        </Text>
+        <SegmentedButtons
+          value={tab}
+          onValueChange={(v) => setTab(v as 'random' | 'songs')}
+          density="small"
+          style={{ width: 220 }}
+          buttons={[
+            { value: 'random', label: 'Random' },
+            { value: 'songs', label: `Songs (${SCORE_LIST.length})` },
+          ]}
+        />
       </View>
 
-      {/* Compact 1-Row Controls for Random Sight-Reading */}
       {tab === 'random' ? (
         <View style={styles.filterWrap}>
-          <View style={styles.summaryBar}>
-            <Pressable onPress={() => setShowFilters((v) => !v)} style={styles.filterToggle}>
-              <SlidersHorizontal size={14} color={palette.accentBrass} />
-              <Text style={styles.filterSummaryText}>
-                {posLabel} · Key {keySig} · {rhythmLabel}
-              </Text>
-            </Pressable>
-            <Pressable onPress={() => regenerate()} style={styles.newBtn}>
-              <Shuffle size={14} color="#111317" />
-              <Text style={styles.newBtnText}>New</Text>
-            </Pressable>
-          </View>
+          <Surface elevation={1} style={styles.summaryBar}>
+            <Button
+              mode="text"
+              compact
+              onPress={() => setShowFilters((v) => !v)}
+              icon={({ size, color }) => <SlidersHorizontal size={size - 3} color={color} />}
+            >
+              {posLabel} · Key {keySig} · {rhythmLabel}
+            </Button>
+            <Button
+              mode="contained"
+              compact
+              onPress={() => regenerate()}
+              icon={({ size, color }) => <Shuffle size={size - 3} color={color} />}
+            >
+              New
+            </Button>
+          </Surface>
 
           {showFilters && (
-            <View style={styles.drawer}>
+            <Surface elevation={1} style={styles.drawer}>
               <View style={styles.chipRow}>
                 {POSITIONS.map((p) => {
                   const locked = !p.free && !state.isFullUnlocked;
                   const active = position === p.id;
                   return (
-                    <Pressable
+                    <Chip
                       key={p.id}
+                      compact
+                      selected={active}
+                      mode={active ? 'flat' : 'outlined'}
+                      icon={
+                        locked
+                          ? ({ size, color }) => <Lock size={size - 4} color={color} />
+                          : undefined
+                      }
                       onPress={() => {
                         if (locked) return onOpenPaywall();
                         setPosition(p.id);
                         regenerate({ position: p.id });
                       }}
-                      style={[styles.chip, active && styles.chipActive]}
                     >
-                      {locked && <Lock size={11} color={palette.accentBrass} />}
-                      <Text style={[styles.chipText, active && styles.chipTextActive]}>
-                        {p.label}
-                      </Text>
-                    </Pressable>
+                      {p.label}
+                    </Chip>
                   );
                 })}
               </View>
 
               <View style={styles.chipRow}>
                 {KEYS.map((k) => (
-                  <Pressable
+                  <Chip
                     key={k}
+                    compact
+                    showSelectedCheck={false}
+                    selected={keySig === k}
+                    mode={keySig === k ? 'flat' : 'outlined'}
                     onPress={() => {
                       setKeySig(k);
                       regenerate({ keySig: k });
                     }}
-                    style={[styles.chip, keySig === k && styles.chipActive]}
                   >
-                    <Text style={[styles.chipText, keySig === k && styles.chipTextActive]}>
-                      {k}
-                    </Text>
-                  </Pressable>
+                    {k}
+                  </Chip>
                 ))}
               </View>
 
               <View style={styles.chipRow}>
                 {RHYTHMS.map((r) => (
-                  <Pressable
+                  <Chip
                     key={r.id}
+                    compact
+                    showSelectedCheck={false}
+                    selected={rhythm === r.id}
+                    mode={rhythm === r.id ? 'flat' : 'outlined'}
                     onPress={() => {
                       setRhythm(r.id);
                       regenerate({ rhythm: r.id });
                     }}
-                    style={[styles.chip, rhythm === r.id && styles.chipActive]}
                   >
-                    <Text style={[styles.chipText, rhythm === r.id && styles.chipTextActive]}>
-                      {r.label}
-                    </Text>
-                  </Pressable>
+                    {r.label}
+                  </Chip>
                 ))}
               </View>
-            </View>
+            </Surface>
           )}
         </View>
       ) : (
-        /* Horizontal Clean Song Picker Strip */
         <ScrollView horizontal showsHorizontalScrollIndicator={false}>
           <View style={styles.songStrip}>
             {SCORE_LIST.map((sc) => {
               const locked = sc.moduleId !== 'R1' && !state.isFullUnlocked;
               const active = selectedSongId === sc.id;
               return (
-                <Pressable
+                <Card
                   key={sc.id}
+                  mode={active ? 'elevated' : 'outlined'}
                   onPress={() => (locked ? onOpenPaywall() : setSelectedSongId(sc.id))}
-                  style={[styles.songChip, active && styles.songChipActive]}
+                  style={[styles.songCard, active && styles.songCardActive]}
                 >
-                  <View style={styles.songChipTop}>
-                    <Text style={styles.songMod}>{sc.moduleId}</Text>
-                    {locked && <Lock size={11} color={palette.accentBrass} />}
-                    {sc.isCapstone && <Text style={styles.capTag}>Full Song</Text>}
-                  </View>
-                  <Text style={styles.songChipTitle} numberOfLines={1}>
-                    {sc.title}
-                  </Text>
-                </Pressable>
+                  <Card.Content style={{ gap: 4, paddingVertical: 12 }}>
+                    <View style={styles.songTop}>
+                      <Text variant="labelSmall" style={{ color: palette.primary, fontWeight: '800' }}>
+                        {sc.moduleId}
+                      </Text>
+                      {locked && <Lock size={12} color={palette.textMuted} />}
+                      {sc.isCapstone && (
+                        <Text variant="labelSmall" style={{ color: palette.successEmerald, fontWeight: '800' }}>
+                          Full Song
+                        </Text>
+                      )}
+                    </View>
+                    <Text variant="titleSmall" style={{ fontWeight: '700' }} numberOfLines={1}>
+                      {sc.title}
+                    </Text>
+                  </Card.Content>
+                </Card>
               );
             })}
           </View>
         </ScrollView>
       )}
 
-      {/* Immediately Visible Player */}
       <PracticePlayer
         score={activeScore}
         onGenerateFreshSightRead={tab === 'random' ? () => regenerate() : undefined}
@@ -232,77 +244,35 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 12 },
-  title: { color: palette.textPrimary, fontSize: 24, fontWeight: '700', fontFamily: 'Georgia' },
-  modeSwitch: {
-    flexDirection: 'row',
-    backgroundColor: palette.bgSurface,
-    borderRadius: radius.md,
-    padding: 4,
-    gap: 4,
-  },
-  modeBtn: { paddingHorizontal: 14, paddingVertical: 7, borderRadius: 8 },
-  modeBtnActive: { backgroundColor: palette.accentBrass },
-  modeText: { color: palette.textSecondary, fontSize: 13, fontWeight: '700' },
-  modeTextActive: { color: '#111317', fontWeight: '800' },
+  title: { color: palette.textPrimary, fontWeight: '800' },
   filterWrap: { gap: 10 },
   summaryBar: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    gap: 10,
     backgroundColor: palette.bgSurface,
     borderWidth: 1,
     borderColor: palette.borderHairline,
-    borderRadius: radius.md,
-    padding: 8,
-    paddingLeft: 12,
+    borderRadius: radius.lg,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
   },
-  filterToggle: { flexDirection: 'row', alignItems: 'center', gap: 8, flex: 1 },
-  filterSummaryText: { color: palette.textPrimary, fontSize: 13, fontWeight: '600' },
-  newBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    backgroundColor: palette.accentBrass,
-    borderRadius: radius.sm,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-  },
-  newBtnText: { color: '#111317', fontSize: 13, fontWeight: '800' },
   drawer: {
     backgroundColor: palette.bgSurface,
-    borderRadius: radius.md,
+    borderRadius: radius.lg,
     borderWidth: 1,
     borderColor: palette.borderHairline,
-    padding: 12,
+    padding: 14,
     gap: 10,
   },
   chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
-  chip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    backgroundColor: palette.bgElevated,
-    borderRadius: radius.sm,
-    paddingHorizontal: 10,
-    paddingVertical: 7,
-  },
-  chipActive: { backgroundColor: palette.accentBrassMuted, borderWidth: 1, borderColor: palette.accentBrass },
-  chipText: { color: palette.textSecondary, fontSize: 12, fontWeight: '600' },
-  chipTextActive: { color: palette.accentBrass, fontWeight: '700' },
-  songStrip: { flexDirection: 'row', gap: 10, paddingBottom: 4 },
-  songChip: {
-    width: 190,
+  songStrip: { flexDirection: 'row', gap: 10, paddingVertical: 2 },
+  songCard: {
+    width: 196,
     backgroundColor: palette.bgSurface,
-    borderWidth: 1,
-    borderColor: palette.borderHairline,
     borderRadius: radius.md,
-    padding: 12,
-    gap: 4,
+    borderColor: palette.borderHairline,
   },
-  songChipActive: { borderColor: palette.accentBrass, backgroundColor: palette.bgElevated },
-  songChipTop: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  songMod: { color: palette.accentBrass, fontSize: 11, fontWeight: '800', fontFamily: 'monospace' },
-  capTag: { color: palette.successEmerald, fontSize: 10, fontWeight: '800' },
-  songChipTitle: { color: palette.textPrimary, fontSize: 14, fontWeight: '700' },
+  songCardActive: { borderWidth: 2, borderColor: palette.primary },
+  songTop: { flexDirection: 'row', alignItems: 'center', gap: 6 },
 });
